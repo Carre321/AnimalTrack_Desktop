@@ -1,0 +1,7 @@
+/bin/
+/logs/
+*.log
+*.class
+
+/lib/iconosPersonalizados/tmp_rebuild/
+/lib/iconosPersonalizados/IconosPers_new.jar
