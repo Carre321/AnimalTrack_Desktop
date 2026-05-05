@@ -49,7 +49,7 @@ import com.tonin.animaltrack.views.controler.CancelController;
 import com.tonin.animaltrack.views.controler.Controller;
 import com.tonin.animaltrack.views.controler.EventoCreateController;
 
-public class EventoCreateView extends View {
+public class EventoCreateView extends AbstractView {
 
     private JTextField idTF;
     private JComboBox<ComboItem<AnimalDTO>> animalCombo;

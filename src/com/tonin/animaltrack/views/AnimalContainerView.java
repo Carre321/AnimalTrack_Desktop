@@ -8,7 +8,7 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
-public class AnimalContainerView extends View implements FarmFilterAware {
+public class AnimalContainerView extends AbstractView implements FarmFilterAware {
 
     private JTabbedPane contentTabbedPanel;
 
@@ -52,7 +52,7 @@ public class AnimalContainerView extends View implements FarmFilterAware {
         mainPanel.add(contentTabbedPanel, BorderLayout.CENTER);
     }
 
-    public void addClosableTab(String title, View view) {
+    public void addClosableTab(String title, AbstractView view) {
         contentTabbedPanel.addTab(title, view);
         int index = contentTabbedPanel.indexOfComponent(view);
         if (index != -1) {

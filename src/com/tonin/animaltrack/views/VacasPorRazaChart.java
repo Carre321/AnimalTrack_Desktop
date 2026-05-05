@@ -15,7 +15,7 @@ import org.jfree.data.general.DefaultPieDataset;
 
 import com.toedter.calendar.JDateChooser;
 
-public class VacasPorRazaChart extends View {
+public class VacasPorRazaChart extends AbstractView {
 
 
 	public VacasPorRazaChart() {

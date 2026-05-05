@@ -37,7 +37,7 @@ import com.tonin.animaltrack.views.controler.AnimalCreateController;
 import com.tonin.animaltrack.views.controler.CancelController;
 import com.tonin.animaltrack.views.controler.Controller;
 
-public class AnimalCreateView extends View {
+public class AnimalCreateView extends AbstractView {
 
     private static final long serialVersionUID = 1L;
 

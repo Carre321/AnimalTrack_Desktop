@@ -34,7 +34,7 @@ import javax.swing.JComboBox;
 import com.tonin.animaltrack.views.renderer.AnimalTableRenderer;
 import com.tonin.animaltrack.views.tableModel.AnimalTableModel;
 
-public class AnimalSearchView extends View implements FarmFilterAware {
+public class AnimalSearchView extends AbstractView implements FarmFilterAware {
     private static final long serialVersionUID = 1L;
 
     private AnimalService animalService;

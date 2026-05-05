@@ -39,7 +39,7 @@ import com.tonin.animaltrack.ui.MainWindow;
 import com.tonin.animaltrack.views.controler.EventoSetEditableController;
 import com.tonin.animaltrack.views.controler.EventoSearchController;
 
-public class EventoSearchView extends View implements FarmFilterAware {
+public class EventoSearchView extends AbstractView implements FarmFilterAware {
 
     private JTextField animalIdTF;
     private JXTable resultadosTable;

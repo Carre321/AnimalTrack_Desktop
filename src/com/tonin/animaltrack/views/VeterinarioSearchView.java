@@ -28,7 +28,7 @@ import com.tonin.animaltrack.ui.MainWindow;
 import com.tonin.animaltrack.views.controler.VeterinarioSetEditableController;
 import com.tonin.animaltrack.views.controler.VeterinarioSearchController;
 
-public class VeterinarioSearchView extends View implements FarmFilterAware {
+public class VeterinarioSearchView extends AbstractView implements FarmFilterAware {
 
     private JTextField codigoTF;
     private JTextField nombreTF;

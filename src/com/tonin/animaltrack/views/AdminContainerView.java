@@ -75,7 +75,7 @@ import com.tonin.animaltrack.service.impl.UsuarioLoginServiceImpl;
 import com.tonin.animaltrack.service.impl.VeterinarioGranjaServiceImpl;
 import com.tonin.animaltrack.service.impl.VeterinarioServiceImpl;
 
-public class AdminContainerView extends View {
+public class AdminContainerView extends AbstractView {
 
     private static final long serialVersionUID = 1L;
 

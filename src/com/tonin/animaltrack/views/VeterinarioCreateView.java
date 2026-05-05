@@ -31,7 +31,7 @@ import com.tonin.animaltrack.views.controler.CancelController;
 import com.tonin.animaltrack.views.controler.Controller;
 import com.tonin.animaltrack.views.controler.VeterinarioCreateController;
 
-public class VeterinarioCreateView extends View {
+public class VeterinarioCreateView extends AbstractView {
 
     private JTextField idTF;
     private JTextField codigoTF;

@@ -3,26 +3,26 @@ package com.tonin.animaltrack.views.controler;
 import javax.swing.AbstractAction;
 import javax.swing.Icon;
 
-import com.tonin.animaltrack.views.View;
+import com.tonin.animaltrack.views.AbstractView;
 
 public abstract class Controller extends AbstractAction {
 	
-	private View view = null;
+	private AbstractView view = null;
 	
-	public Controller(View view) {
+	public Controller(AbstractView view) {
 		this(view, null);
 	}
 
-	public Controller(View view, String name) {
+	public Controller(AbstractView view, String name) {
 		this(view, name, null);
 	}
 
-	public Controller(View view, String name, Icon icon) {
+	public Controller(AbstractView view, String name, Icon icon) {
 		super(name, icon);
 		this.view = view;
 	}
 
-	public View getView() {
+	public AbstractView getView() {
 		return this.view;
 	}
 	

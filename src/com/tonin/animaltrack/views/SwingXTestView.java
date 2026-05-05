@@ -15,7 +15,7 @@ import org.jdesktop.swingx.JXButton;
 import org.jdesktop.swingx.JXMonthView;
 import org.jdesktop.swingx.JXDatePicker;
 
-public class SwingXTestView extends View {
+public class SwingXTestView extends AbstractView {
 
 	private static final long serialVersionUID = 1L;
 	private JXComboBox razaCB;

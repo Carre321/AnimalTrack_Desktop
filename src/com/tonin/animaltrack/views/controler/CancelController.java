@@ -7,17 +7,17 @@ import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 
 import com.tonin.animaltrack.ui.MainWindow;
-import com.tonin.animaltrack.views.View;
+import com.tonin.animaltrack.views.AbstractView;
 
 public class CancelController extends Controller {
 
-	public CancelController(View view) {
+	public CancelController(AbstractView view) {
 		super(view, "Cancelar",
 				new ImageIcon(CancelController.class.getResource("/nuvola/32x32/1250_delete_delete.png")));
 	}
 	
 	public void doAction() {
-		View view = getView();
+		AbstractView view = getView();
 		JTabbedPane tabbedPane = (JTabbedPane) SwingUtilities.getAncestorOfClass(JTabbedPane.class, view);
 		if (tabbedPane != null) {
 			tabbedPane.remove(view);
