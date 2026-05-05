@@ -37,7 +37,7 @@ import com.tonin.animaltrack.service.impl.GranjaServiceImpl;
 import com.tonin.animaltrack.service.impl.VeterinarioGranjaServiceImpl;
 import com.tonin.animaltrack.views.FarmFilterAware;
 import com.tonin.animaltrack.views.FilterableComboBoxSupport;
-import com.tonin.animaltrack.views.View;
+import com.tonin.animaltrack.views.AbstractView;
 import com.tonin.animaltrack.views.controler.OpenAdminController;
 import com.tonin.animaltrack.views.controler.OpenAnimalSearchController;
 import com.tonin.animaltrack.views.controler.OpenEventoSearchController;
@@ -222,7 +222,7 @@ public class MainWindow {
         adminButton.addActionListener(adminController);
     }
 
-    public void setView(View view) {
+    public void setView(AbstractView view) {
         contentPanel.removeAll();
         contentPanel.add(view, BorderLayout.CENTER);
         contentPanel.revalidate();
@@ -230,7 +230,7 @@ public class MainWindow {
         refreshCurrentViewForFarmFilter();
     }
 
-    public void remove(View view) {
+    public void remove(AbstractView view) {
         if (view == null) {
             return;
         }
