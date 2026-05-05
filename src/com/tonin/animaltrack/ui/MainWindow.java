@@ -43,6 +43,11 @@ import com.tonin.animaltrack.views.controler.OpenAnimalSearchController;
 import com.tonin.animaltrack.views.controler.OpenEventoSearchController;
 import com.tonin.animaltrack.views.controler.OpenVeterinarioSearchController;
 
+
+/*
+ * VEntana princial del sistema, desde la cual se accede a las diferentes funcionalidades. Contiene un menu lateral para navegar entre vistas, un combo para filtrar por granja y un boton para mostrar informacion del usuario logueado.
+ */
+
 public class MainWindow {
 
     private static MainWindow instance = null;
