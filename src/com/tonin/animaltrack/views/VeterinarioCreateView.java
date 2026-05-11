@@ -90,11 +90,11 @@ public class VeterinarioCreateView extends AbstractView {
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 6));
         agreeButton = new JButton("Guardar");
-        agreeButton.setIcon(new ImageIcon(VeterinarioCreateView.class.getResource("/nuvola/32x32/1847_save_guardar_disk.png")));
+        agreeButton.setIcon(new ImageIcon(VeterinarioCreateView.class.getResource("/animaltrack/icons/32/save.png")));
         buttonPanel.add(agreeButton);
 
         reloadButton = new JButton("Recargar");
-        reloadButton.setIcon(new ImageIcon(VeterinarioCreateView.class.getResource("/nuvola/32x32/1839_all_all_refresh_reload_sync_tabs_refresh_reload_sync_tabs.png")));
+        reloadButton.setIcon(new ImageIcon(VeterinarioCreateView.class.getResource("/animaltrack/icons/32/refresh.png")));
         reloadButton.addActionListener(e -> resetForm());
         buttonPanel.add(reloadButton);
 
@@ -347,14 +347,14 @@ public class VeterinarioCreateView extends AbstractView {
 
         if (editable && parseLong(idTF.getText()) != null) {
             reloadButton.setText("Cancelar");
-            reloadButton.setIcon(new ImageIcon(VeterinarioCreateView.class.getResource("/nuvola/32x32/1250_delete_delete.png")));
+            reloadButton.setIcon(new ImageIcon(VeterinarioCreateView.class.getResource("/animaltrack/icons/32/cancel.png")));
             reloadButton.setEnabled(true);
             reloadButton.setAction(new CancelController(this));
             return;
         }
 
         reloadButton.setText("Recargar");
-        reloadButton.setIcon(new ImageIcon(VeterinarioCreateView.class.getResource("/nuvola/32x32/1839_all_all_refresh_reload_sync_tabs_refresh_reload_sync_tabs.png")));
+        reloadButton.setIcon(new ImageIcon(VeterinarioCreateView.class.getResource("/animaltrack/icons/32/refresh.png")));
         reloadButton.setEnabled(editable);
         reloadButton.addActionListener(e -> resetForm());
     }

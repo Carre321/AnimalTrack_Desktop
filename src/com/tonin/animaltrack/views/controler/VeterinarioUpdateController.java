@@ -13,7 +13,7 @@ public class VeterinarioUpdateController extends Controller {
     public VeterinarioUpdateController(VeterinarioCreateView view) {
         super(view, "Actualizar",
                 new ImageIcon(VeterinarioUpdateController.class
-                        .getResource("/nuvola/32x32/1847_save_guardar_disk.png")));
+                        .getResource("/animaltrack/icons/32/save.png")));
         this.view = view;
     }
 

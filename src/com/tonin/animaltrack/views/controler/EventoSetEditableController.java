@@ -13,7 +13,7 @@ public class EventoSetEditableController extends Controller {
     public EventoSetEditableController(EventoCreateView view) {
         super(view, "Editar",
                 new ImageIcon(EventoSetEditableController.class
-                        .getResource("/nuvola/32x32/1819_pencil_pencil.png")));
+                        .getResource("/animaltrack/icons/32/edit.png")));
         this.view = view;
     }
 

@@ -20,7 +20,7 @@ public class EventoSearchController extends Controller implements KeyListener {
 
 	public EventoSearchController(EventoSearchView view) {
 		super(view, "Buscar",
-				new ImageIcon(EventoSearchController.class.getResource("/nuvola/32x32/1746_find_find.png")));
+				new ImageIcon(EventoSearchController.class.getResource("/animaltrack/icons/32/search.png")));
 		this.view = view;
 		this.service = new EventoServiceImpl();
 	}

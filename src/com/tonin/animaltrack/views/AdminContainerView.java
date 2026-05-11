@@ -169,19 +169,19 @@ public class AdminContainerView extends AbstractView {
             JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 6));
             add(buttonPanel, BorderLayout.SOUTH);
 
-            JButton nuevoButton = new JButton("Nuevo", icon("/nuvola/32x32/1727_add_add.png"));
+            JButton nuevoButton = new JButton("Nuevo", icon("/animaltrack/icons/32/add-new.png"));
             nuevoButton.addActionListener(e -> clearForm());
             buttonPanel.add(nuevoButton);
 
-            JButton guardarButton = new JButton("Guardar", icon("/nuvola/32x32/1847_save_guardar_disk.png"));
+            JButton guardarButton = new JButton("Guardar", icon("/animaltrack/icons/32/save.png"));
             guardarButton.addActionListener(e -> save());
             buttonPanel.add(guardarButton);
 
-            JButton borrarButton = new JButton("Borrar", icon("/nuvola/32x32/1250_delete_delete.png"));
+            JButton borrarButton = new JButton("Borrar", icon("/animaltrack/icons/32/delete.png"));
             borrarButton.addActionListener(e -> deleteSelected());
             buttonPanel.add(borrarButton);
 
-            JButton recargarButton = new JButton("Recargar", icon("/nuvola/32x32/1839_all_all_refresh_reload_sync_tabs_refresh_reload_sync_tabs.png"));
+            JButton recargarButton = new JButton("Recargar", icon("/animaltrack/icons/32/refresh.png"));
             recargarButton.addActionListener(e -> reload());
             buttonPanel.add(recargarButton);
 
@@ -465,13 +465,13 @@ public class AdminContainerView extends AbstractView {
             top.add(new JLabel(secondLabel + ":"));
             top.add(secondCB);
 
-            JButton guardarButton = new JButton("Guardar", icon("/nuvola/32x32/1847_save_guardar_disk.png"));
+            JButton guardarButton = new JButton("Guardar", icon("/animaltrack/icons/32/save.png"));
             guardarButton.addActionListener(e -> save());
             top.add(guardarButton);
-            JButton borrarButton = new JButton("Borrar", icon("/nuvola/32x32/1250_delete_delete.png"));
+            JButton borrarButton = new JButton("Borrar", icon("/animaltrack/icons/32/delete.png"));
             borrarButton.addActionListener(e -> delete());
             top.add(borrarButton);
-            JButton buscarButton = new JButton("Buscar por primero", icon("/nuvola/32x32/1746_find_find.png"));
+            JButton buscarButton = new JButton("Buscar por primero", icon("/animaltrack/icons/32/search.png"));
             buscarButton.addActionListener(e -> reload());
             top.add(buscarButton);
 

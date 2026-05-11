@@ -13,7 +13,7 @@ public class AnimalSetEditableController extends Controller {
     public AnimalSetEditableController(AnimalCreateView view) {
         super(view, "Editar",
                 new ImageIcon(AnimalSetEditableController.class
-                        .getResource("/nuvola/32x32/1819_pencil_pencil.png")));
+                        .getResource("/animaltrack/icons/32/edit.png")));
         this.view = view;
     }
 

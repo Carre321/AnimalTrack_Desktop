@@ -20,7 +20,7 @@ public class VeterinarioSearchController extends Controller implements KeyListen
 
 	public VeterinarioSearchController(VeterinarioSearchView view) {
 		super(view, "Buscar",
-				new ImageIcon(VeterinarioSearchController.class.getResource("/nuvola/32x32/1746_find_find.png")));
+				new ImageIcon(VeterinarioSearchController.class.getResource("/animaltrack/icons/32/search.png")));
 		this.view = view;
 		this.service = new VeterinarioServiceImpl();
 	}

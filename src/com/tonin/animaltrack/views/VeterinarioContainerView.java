@@ -32,7 +32,7 @@ public class VeterinarioContainerView extends AbstractView implements FarmFilter
 
         JButton nuevoVeterinarioButton = new JButton("Nuevo Veterinario");
         nuevoVeterinarioButton.setIcon(new ImageIcon(
-                VeterinarioContainerView.class.getResource("/nuvola/32x32/1727_add_add.png")));
+                VeterinarioContainerView.class.getResource("/animaltrack/icons/32/add-new.png")));
         nuevoVeterinarioButton.addActionListener(e -> {
             VeterinarioCreateView createView = new VeterinarioCreateView();
             addClosableTab(createView.getName(), createView);
@@ -45,7 +45,7 @@ public class VeterinarioContainerView extends AbstractView implements FarmFilter
             addClosableTab(searchView.getName(), searchView);
         });
         buscarVeterinarioButton.setIcon(new ImageIcon(
-                VeterinarioContainerView.class.getResource("/nuvola/32x32/1746_find_find.png")));
+                VeterinarioContainerView.class.getResource("/animaltrack/icons/32/search.png")));
         buttonPanel.add(buscarVeterinarioButton);
 
         contentTabbedPanel = new JTabbedPane(JTabbedPane.TOP);

@@ -32,7 +32,7 @@ public class EventoContainerView extends AbstractView implements FarmFilterAware
 
         JButton nuevoEventoButton = new JButton("Nuevo Evento");
         nuevoEventoButton.setIcon(new ImageIcon(
-                EventoContainerView.class.getResource("/nuvola/32x32/1727_add_add.png")));
+                EventoContainerView.class.getResource("/animaltrack/icons/32/add-new.png")));
         nuevoEventoButton.addActionListener(e -> {
             EventoCreateView createView = new EventoCreateView();
             addClosableTab(createView.getName(), createView);
@@ -45,7 +45,7 @@ public class EventoContainerView extends AbstractView implements FarmFilterAware
             addClosableTab(searchView.getName(), searchView);
         });
         buscarEventoButton
-                .setIcon(new ImageIcon(EventoContainerView.class.getResource("/nuvola/32x32/1746_find_find.png")));
+                .setIcon(new ImageIcon(EventoContainerView.class.getResource("/animaltrack/icons/32/search.png")));
         buttonPanel.add(buscarEventoButton);
 
         contentTabbedPanel = new JTabbedPane(JTabbedPane.TOP);

@@ -23,7 +23,7 @@ implements KeyListener, ItemListener {
 
 	public AnimalSearchController(AnimalSearchView view) {
 		super(view, "Buscar",
-				new ImageIcon(AnimalSearchController.class.getResource("/nuvola/32x32/1746_find_find.png")));
+				new ImageIcon(AnimalSearchController.class.getResource("/animaltrack/icons/32/search.png")));
 		this.view = view;
 		this.service = new AnimalServiceImpl();
 	}

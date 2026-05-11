@@ -14,7 +14,7 @@ public class OpenAdminController extends AbstractAction {
 
     public OpenAdminController() {
         super("Administracion",
-                new ImageIcon(OpenAdminController.class.getResource("/nuvola/32x32/1293_modules_modules.png")));
+                new ImageIcon(OpenAdminController.class.getResource("/animaltrack/icons/32/admin.png")));
     }
 
     @Override

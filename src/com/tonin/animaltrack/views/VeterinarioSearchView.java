@@ -92,7 +92,7 @@ public class VeterinarioSearchView extends AbstractView implements FarmFilterAwa
 
         buscarButton = new JButton("Buscar");
         buscarButton
-                .setIcon(new ImageIcon(VeterinarioSearchView.class.getResource("/nuvola/32x32/1746_find_find.png")));
+                .setIcon(new ImageIcon(VeterinarioSearchView.class.getResource("/animaltrack/icons/32/search.png")));
         buscarPanel.add(buscarButton);
 
         resultadosTable = new JXTable();

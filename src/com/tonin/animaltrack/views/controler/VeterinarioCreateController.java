@@ -13,7 +13,7 @@ public class VeterinarioCreateController extends Controller {
     public VeterinarioCreateController(VeterinarioCreateView view) {
         super(view, "Guardar",
                 new ImageIcon(VeterinarioCreateController.class
-                        .getResource("/nuvola/32x32/1847_save_guardar_disk.png")));
+                        .getResource("/animaltrack/icons/32/save.png")));
         this.view = view;
     }
 

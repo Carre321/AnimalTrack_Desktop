@@ -13,7 +13,7 @@ public class AnimalUpdateController extends Controller {
     public AnimalUpdateController(AnimalCreateView view) {
         super(view, "Actualizar",
                 new ImageIcon(AnimalUpdateController.class
-                        .getResource("/nuvola/32x32/1847_save_guardar_disk.png")));
+                        .getResource("/animaltrack/icons/32/save.png")));
         this.view = view;
     }
 

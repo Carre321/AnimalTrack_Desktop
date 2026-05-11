@@ -19,6 +19,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
@@ -128,7 +129,7 @@ public class MainWindow {
         mainMenuPanel.setLayout(gbl_mainMenuPanel);
 
         eventoButton = new JButton("Eventos");
-        eventoButton.setIcon(new ImageIcon(MainWindow.class.getResource("/nuvola/32x32/1680_vcalendar_vcalendar.png")));
+        eventoButton.setIcon(new ImageIcon(MainWindow.class.getResource("/animaltrack/icons/32/calendar.png")));
         GridBagConstraints gbc_eventoButton = new GridBagConstraints();
         gbc_eventoButton.fill = GridBagConstraints.HORIZONTAL;
         gbc_eventoButton.insets = new Insets(0, 0, 5, 0);
@@ -137,7 +138,7 @@ public class MainWindow {
         mainMenuPanel.add(eventoButton, gbc_eventoButton);
 
         animalButton = new JButton("Animal");
-        animalButton.setIcon(new ImageIcon(MainWindow.class.getResource("/nuvola/32x32/1443_kedi_kedi_cat_animal_cat_animal.png")));
+        animalButton.setIcon(new ImageIcon(MainWindow.class.getResource("/animaltrack/icons/32/animal.png")));
         GridBagConstraints gbc_animalButton = new GridBagConstraints();
         gbc_animalButton.fill = GridBagConstraints.HORIZONTAL;
         gbc_animalButton.insets = new Insets(0, 0, 5, 0);
@@ -146,7 +147,7 @@ public class MainWindow {
         mainMenuPanel.add(animalButton, gbc_animalButton);
 
         veterinarioButton = new JButton("Veterinario");
-        veterinarioButton.setIcon(new ImageIcon(MainWindow.class.getResource("/nuvola/32x32/1294_doctor_medical_dentist_health_health_medical_dentist_doctor.png")));
+        veterinarioButton.setIcon(new ImageIcon(MainWindow.class.getResource("/animaltrack/icons/32/veterinarian.png")));
         GridBagConstraints gbc_veterinarioButton = new GridBagConstraints();
         gbc_veterinarioButton.fill = GridBagConstraints.HORIZONTAL;
         gbc_veterinarioButton.gridx = 0;
@@ -154,7 +155,7 @@ public class MainWindow {
         mainMenuPanel.add(veterinarioButton, gbc_veterinarioButton);
 
         adminButton = new JButton("Administracion");
-        adminButton.setIcon(new ImageIcon(MainWindow.class.getResource("/nuvola/32x32/1293_modules_modules.png")));
+        adminButton.setIcon(new ImageIcon(MainWindow.class.getResource("/animaltrack/icons/32/admin.png")));
         GridBagConstraints gbc_adminButton = new GridBagConstraints();
         gbc_adminButton.fill = GridBagConstraints.HORIZONTAL;
         gbc_adminButton.insets = new Insets(5, 0, 0, 0);
@@ -199,7 +200,7 @@ public class MainWindow {
         northPanel.add(derechaPanel, BorderLayout.EAST);
 
         usuarioButton = new JButton("");
-        usuarioButton.setIcon(new ImageIcon(MainWindow.class.getResource("/nuvola/16x16/1447_man_male_male_man_user_employee_manager_employee_operator_manager_personal_operator_administrator_administrator_personal_user.png")));
+        usuarioButton.setIcon(new ImageIcon(MainWindow.class.getResource("/animaltrack/icons/16/login.png")));
         usuarioButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 if (currentUser == null) {
@@ -207,10 +208,7 @@ public class MainWindow {
                             JOptionPane.INFORMATION_MESSAGE);
                     return;
                 }
-                JOptionPane.showMessageDialog(frame,
-                        "Usuario: " + currentUser.getNombreVisible() + "\nRol: " + currentUser.getRol()
-                                + "\nEmail: " + currentUser.getEmail(),
-                        "Sesion actual", JOptionPane.INFORMATION_MESSAGE);
+                showProfile();
             }
         });
         derechaPanel.add(usuarioButton);
@@ -268,6 +266,51 @@ public class MainWindow {
     public void showWindow() {
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
+    }
+
+    private void showProfile() {
+        JPanel profilePanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(6, 8, 6, 8);
+        gbc.anchor = GridBagConstraints.WEST;
+
+        addProfileRow(profilePanel, gbc, 0, "Usuario:", currentUser.getNombreVisible());
+        addProfileRow(profilePanel, gbc, 1, "Rol:", currentUser.getRol());
+        addProfileRow(profilePanel, gbc, 2, "Email:", currentUser.getEmail());
+
+        Object[] options = { "Cerrar sesion", "Cerrar" };
+        int option = JOptionPane.showOptionDialog(frame, profilePanel, "Perfil", JOptionPane.YES_NO_OPTION,
+                JOptionPane.INFORMATION_MESSAGE,
+                new ImageIcon(MainWindow.class.getResource("/animaltrack/logo-64.png")), options, options[1]);
+        if (option == JOptionPane.YES_OPTION) {
+            logout();
+        }
+    }
+
+    private void addProfileRow(JPanel panel, GridBagConstraints gbc, int row, String label, String value) {
+        gbc.gridx = 0;
+        gbc.gridy = row;
+        panel.add(new JLabel(label), gbc);
+
+        gbc.gridx = 1;
+        panel.add(new JLabel(value == null ? "" : value), gbc);
+    }
+
+    public void logout() {
+        int option = JOptionPane.showConfirmDialog(frame, "Cerrar la sesion actual?", "Cerrar sesion",
+                JOptionPane.YES_NO_OPTION);
+        if (option != JOptionPane.YES_OPTION) {
+            return;
+        }
+
+        setCurrentUser(null);
+        contentPanel.removeAll();
+        contentPanel.revalidate();
+        contentPanel.repaint();
+
+        frame.dispose();
+        instance = null;
+        new LoginWindow().showWindow();
     }
 
     private List<GranjaDTO> resolveAvailableFarms(UsuarioLoginDTO user) {

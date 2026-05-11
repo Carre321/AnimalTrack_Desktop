@@ -17,6 +17,7 @@
 	<classpathentry kind="lib" path="lib/nuvola/nuvola-icons.jar"/>
 	<classpathentry kind="lib" path="lib/jcalendar/jcalendar-1.4.jar"/>
 	<classpathentry kind="lib" path="lib/animaltrack/animaltrack_middleware.jar"/>
+	<classpathentry kind="lib" path="lib/animaltrack-assets/animaltrack-assets.jar"/>
 	<classpathentry kind="lib" path="lib/jfreechart/jfreechart-1.5.6.jar"/>
 	<classpathentry kind="lib" path="lib/log4j2/log4j-core-2.12.4.jar"/>
 	<classpathentry kind="lib" path="lib/log4j2/log4j-api-2.12.4.jar"/>

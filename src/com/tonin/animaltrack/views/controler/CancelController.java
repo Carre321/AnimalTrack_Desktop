@@ -13,7 +13,7 @@ public class CancelController extends Controller {
 
 	public CancelController(AbstractView view) {
 		super(view, "Cancelar",
-				new ImageIcon(CancelController.class.getResource("/nuvola/32x32/1250_delete_delete.png")));
+				new ImageIcon(CancelController.class.getResource("/animaltrack/icons/32/cancel.png")));
 	}
 	
 	public void doAction() {

@@ -32,7 +32,7 @@ public class AnimalContainerView extends AbstractView implements FarmFilterAware
 
         JButton nuevoAnimalButton = new JButton("Nuevo Animal");
         nuevoAnimalButton.setIcon(
-                new ImageIcon(AnimalContainerView.class.getResource("/nuvola/32x32/1727_add_add.png")));
+                new ImageIcon(AnimalContainerView.class.getResource("/animaltrack/icons/32/add-new.png")));
         nuevoAnimalButton.addActionListener(e -> {
             AnimalCreateView createView = new AnimalCreateView();
             addClosableTab(createView.getName(), createView);
@@ -45,7 +45,7 @@ public class AnimalContainerView extends AbstractView implements FarmFilterAware
             addClosableTab(searchView.getName(), searchView);
         });
         buscarAnimalButton
-                .setIcon(new ImageIcon(AnimalContainerView.class.getResource("/nuvola/32x32/1746_find_find.png")));
+                .setIcon(new ImageIcon(AnimalContainerView.class.getResource("/animaltrack/icons/32/search.png")));
         buttonPanel.add(buscarAnimalButton);
 
         contentTabbedPanel = new JTabbedPane(JTabbedPane.TOP);

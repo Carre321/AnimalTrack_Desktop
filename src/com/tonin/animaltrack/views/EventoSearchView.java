@@ -118,7 +118,7 @@ public class EventoSearchView extends AbstractView implements FarmFilterAware {
         buscarPanel.add(fechaHastaDateChooser);
 
         buscarButton = new JButton("Buscar");
-        buscarButton.setIcon(new ImageIcon(EventoSearchView.class.getResource("/nuvola/32x32/1746_find_find.png")));
+        buscarButton.setIcon(new ImageIcon(EventoSearchView.class.getResource("/animaltrack/icons/32/search.png")));
         buscarPanel.add(buscarButton);
 
         resultadosTable = new JXTable();
