@@ -29,6 +29,7 @@ import com.tonin.animaltrack.views.controler.VeterinarioSetEditableController;
 import com.tonin.animaltrack.views.controler.VeterinarioSearchController;
 
 public class VeterinarioSearchView extends AbstractView implements FarmFilterAware {
+    private static final String NO_MATCHES_MESSAGE = "No hay coincidencias con el filtro de busqueda.";
 
     private JTextField codigoTF;
     private JTextField nombreTF;
@@ -169,16 +170,20 @@ public class VeterinarioSearchView extends AbstractView implements FarmFilterAwa
             }
         };
 
-        for (VeterinarioDTO dto : this.model) {
-            model.addRow(new Object[] {
-                    dto.getCodigo(),
-                    dto.getDni(),
-                    dto.getNombre(),
-                    dto.getApellidos(),
-                    dto.getTelefono(),
-                    dto.getEmail(),
-                    dto.getMunicipioNombre(),
-                    dto.getProvinciaNombre() });
+        if (this.model.isEmpty()) {
+            model.addRow(new Object[] { NO_MATCHES_MESSAGE, null, null, null, null, null, null, null });
+        } else {
+            for (VeterinarioDTO dto : this.model) {
+                model.addRow(new Object[] {
+                        dto.getCodigo(),
+                        dto.getDni(),
+                        dto.getNombre(),
+                        dto.getApellidos(),
+                        dto.getTelefono(),
+                        dto.getEmail(),
+                        dto.getMunicipioNombre(),
+                        dto.getProvinciaNombre() });
+            }
         }
 
         resultadosTable.setModel(model);

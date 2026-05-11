@@ -78,6 +78,7 @@ import com.tonin.animaltrack.service.impl.VeterinarioServiceImpl;
 public class AdminContainerView extends AbstractView {
 
     private static final long serialVersionUID = 1L;
+    private static final String NO_MATCHES_MESSAGE = "No hay coincidencias con el filtro de busqueda.";
 
     public AdminContainerView() {
         setName("Administracion");
@@ -238,6 +239,11 @@ public class AdminContainerView extends AbstractView {
                 if (filter == null || normalize(searchable.toString()).contains(filter)) {
                     model.addRow(values);
                 }
+            }
+            if (filter != null && model.getRowCount() == 0) {
+                Object[] values = new Object[fields.size()];
+                values[fields.size() > 1 ? 1 : 0] = NO_MATCHES_MESSAGE;
+                model.addRow(values);
             }
             table.setModel(model);
             hideColumn("ID");

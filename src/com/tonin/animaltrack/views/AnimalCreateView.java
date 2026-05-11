@@ -44,6 +44,7 @@ public class AnimalCreateView extends AbstractView {
     private JTextField nombreTF;
     private JTextField crotalTF;
     private JTextField fechaNacimientoTF;
+    private JLabel fechaBajaLabel;
     private JTextField fechaBajaTF;
     private JTextField madreExternaTF;
     private JTextField idTF;
@@ -98,7 +99,8 @@ public class AnimalCreateView extends AbstractView {
         addField(formPanel, row++, "Nombre:", nombreTF);
         addField(formPanel, row++, "Crotal:", crotalTF);
         addField(formPanel, row++, "Fecha nac. (yyyy-MM-dd):", fechaNacimientoTF);
-        addField(formPanel, row++, "Fecha baja (yyyy-MM-dd):", fechaBajaTF);
+        fechaBajaLabel = new JLabel("Fecha baja (yyyy-MM-dd):");
+        addField(formPanel, row++, fechaBajaLabel, fechaBajaTF);
         addField(formPanel, row++, "Granja:", granjaCombo);
         addField(formPanel, row++, "Sexo:", sexoCombo);
         addField(formPanel, row++, "Raza:", razaCombo);
@@ -118,6 +120,7 @@ public class AnimalCreateView extends AbstractView {
 
         add(buttonPanel, BorderLayout.SOUTH);
 
+        showFechaBaja(false);
         granjaCombo.addActionListener(e -> reloadBySelectedFarm());
     }
 
@@ -183,7 +186,7 @@ public class AnimalCreateView extends AbstractView {
             AnimalDTO created = animalService.create(animal);
             if (created == null || created.getId() == null) {
                 JOptionPane.showMessageDialog(this,
-                        "No se pudo guardar. Revisa los campos obligatorios y la madre interna/externa.",
+                        "Faltan datos obligatorios. Revisa los datos introducidos.",
                         "Validacion", JOptionPane.WARNING_MESSAGE);
                 return false;
             }
@@ -230,7 +233,7 @@ public class AnimalCreateView extends AbstractView {
         nombreTF.setEditable(editable);
         crotalTF.setEditable(editable);
         fechaNacimientoTF.setEditable(editable);
-        fechaBajaTF.setEditable(editable);
+        fechaBajaTF.setEditable(editable && fechaBajaTF.isVisible());
         madreExternaTF.setEditable(editable);
         granjaCombo.setEnabled(editable);
         sexoCombo.setEnabled(editable);
@@ -249,6 +252,7 @@ public class AnimalCreateView extends AbstractView {
         }
 
         setName("Detalle Animal");
+        showFechaBaja(true);
         idTF.setText(animal.getId() == null ? "" : String.valueOf(animal.getId()));
         nombreTF.setText(defaultString(animal.getNombre()));
         crotalTF.setText(defaultString(animal.getCrotal()));
@@ -281,7 +285,7 @@ public class AnimalCreateView extends AbstractView {
         animal.setNombre(trimToNull(nombreTF.getText()));
         animal.setCrotal(trimToNull(crotalTF.getText()));
         animal.setFechaNacimiento(parseDate(fechaNacimientoTF.getText()));
-        animal.setFechaBaja(parseDate(fechaBajaTF.getText()));
+        animal.setFechaBaja(animal.getId() == null ? null : parseDate(fechaBajaTF.getText()));
         animal.setGranjaId(granjaItem == null || granjaItem.getValue() == null ? null : granjaItem.getValue().getId());
         animal.setSexoId(sexoItem == null || sexoItem.getValue() == null ? null : sexoItem.getValue().getId());
         animal.setRazaId(razaItem == null || razaItem.getValue() == null ? null : razaItem.getValue().getId());
@@ -307,6 +311,7 @@ public class AnimalCreateView extends AbstractView {
         clearComboSelection(madreInternaCombo);
         clearComboSelection(padreInternoCombo);
         configureSecondaryButton(true);
+        showFechaBaja(false);
     }
 
     private void configureSecondaryButton(boolean editable) {
@@ -393,10 +398,35 @@ public class AnimalCreateView extends AbstractView {
     @SuppressWarnings("unchecked")
     private <T> ComboItem<T> getSelectedItem(JComboBox<ComboItem<T>> combo) {
         Object selectedItem = combo.getSelectedItem();
-        if (!(selectedItem instanceof ComboItem)) {
+        Object editorItem = combo.getEditor() == null ? null : combo.getEditor().getItem();
+        String editorText = trimToNull(editorItem == null ? null : editorItem.toString());
+        if (selectedItem instanceof ComboItem) {
+            ComboItem<T> item = (ComboItem<T>) selectedItem;
+            if (editorText == null || editorText.equals(item.toString())) {
+                return item;
+            }
+        }
+        if (editorText == null) {
             return null;
         }
-        return (ComboItem<T>) selectedItem;
+        ComboBoxModel<ComboItem<T>> model = combo.getModel();
+        for (int i = 0; i < model.getSize(); i++) {
+            ComboItem<T> item = model.getElementAt(i);
+            if (item != null && editorText.equals(item.toString())) {
+                combo.setSelectedIndex(i);
+                return item;
+            }
+        }
+        return null;
+    }
+
+    private void showFechaBaja(boolean visible) {
+        fechaBajaLabel.setVisible(visible);
+        fechaBajaTF.setVisible(visible);
+        fechaBajaTF.setEditable(visible);
+        if (!visible) {
+            fechaBajaTF.setText("");
+        }
     }
 
     private String trimToNull(String value) {

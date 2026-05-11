@@ -10,6 +10,7 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.table.DefaultTableModel;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -36,6 +37,7 @@ import com.tonin.animaltrack.views.tableModel.AnimalTableModel;
 
 public class AnimalSearchView extends AbstractView implements FarmFilterAware {
     private static final long serialVersionUID = 1L;
+    private static final String NO_MATCHES_MESSAGE = "No hay coincidencias con el filtro de busqueda.";
 
     private AnimalService animalService;
     private SexoService sexoService;
@@ -187,9 +189,28 @@ public class AnimalSearchView extends AbstractView implements FarmFilterAware {
 
     public void updateView() {
         List<AnimalDTO> rows = model == null ? Collections.<AnimalDTO>emptyList() : model;
-        resultsTable.setModel(new AnimalTableModel(rows));
-        resultsTable.setDefaultRenderer(AnimalDTO.class, new AnimalTableRenderer());
+        if (rows.isEmpty()) {
+            resultsTable.setModel(noMatchesTableModel(new Object[] { "Crotal", "Nombre", "Raza", "Sexo", "Granja" }));
+        } else {
+            resultsTable.setModel(new AnimalTableModel(rows));
+            resultsTable.setDefaultRenderer(AnimalDTO.class, new AnimalTableRenderer());
+        }
         totalResultadosLabel.setText(rows.size() + " Resultados Encontrados");
+    }
+
+    private DefaultTableModel noMatchesTableModel(Object[] columns) {
+        DefaultTableModel tableModel = new DefaultTableModel(columns, 0) {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        Object[] values = new Object[columns.length];
+        values[0] = NO_MATCHES_MESSAGE;
+        tableModel.addRow(values);
+        return tableModel;
     }
 
     private void loadSexoCombo() {

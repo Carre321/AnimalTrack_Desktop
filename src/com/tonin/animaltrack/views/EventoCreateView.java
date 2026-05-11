@@ -154,7 +154,7 @@ public class EventoCreateView extends AbstractView {
             Evento evento = buildEvento();
             EventoDTO created = eventoService.create(evento);
             if (created == null || created.getId() == null) {
-                JOptionPane.showMessageDialog(this, "No se pudo guardar el evento. Revisa los campos obligatorios.",
+                JOptionPane.showMessageDialog(this, "Faltan datos obligatorios. Revisa los datos introducidos.",
                         "Validacion", JOptionPane.WARNING_MESSAGE);
                 return false;
             }

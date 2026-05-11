@@ -40,6 +40,7 @@ import com.tonin.animaltrack.views.controler.EventoSetEditableController;
 import com.tonin.animaltrack.views.controler.EventoSearchController;
 
 public class EventoSearchView extends AbstractView implements FarmFilterAware {
+    private static final String NO_MATCHES_MESSAGE = "No hay coincidencias con el filtro de busqueda.";
 
     private JTextField animalIdTF;
     private JXTable resultadosTable;
@@ -215,14 +216,18 @@ public class EventoSearchView extends AbstractView implements FarmFilterAware {
                     }
                 };
 
-        for (EventoDTO dto : this.model) {
-            model.addRow(new Object[] {
-                    dto.getAnimalNombre(),
-                    dto.getAnimalCrotal(),
-                    dto.getTipoEventoNombre(),
-                    dto.getVeterinarioNombreCompleto(),
-                    dto.getFechaHora(),
-                    dto.getPrecioEvento() });
+        if (this.model.isEmpty()) {
+            model.addRow(new Object[] { NO_MATCHES_MESSAGE, null, null, null, null, null });
+        } else {
+            for (EventoDTO dto : this.model) {
+                model.addRow(new Object[] {
+                        dto.getAnimalNombre(),
+                        dto.getAnimalCrotal(),
+                        dto.getTipoEventoNombre(),
+                        dto.getVeterinarioNombreCompleto(),
+                        dto.getFechaHora(),
+                        dto.getPrecioEvento() });
+            }
         }
 
         resultadosTable.setModel(model);
