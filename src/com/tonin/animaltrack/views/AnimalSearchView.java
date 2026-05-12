@@ -215,7 +215,6 @@ public class AnimalSearchView extends AbstractView implements FarmFilterAware {
 
     private void loadSexoCombo() {
         DefaultComboBoxModel<ComboItem<Sexo>> comboModel = new DefaultComboBoxModel<ComboItem<Sexo>>();
-        comboModel.addElement(new ComboItem<Sexo>(null, "Todos"));
         List<Sexo> sexos = sexoService.findAll();
         if (sexos != null) {
             for (Sexo sexo : sexos) {
@@ -223,12 +222,11 @@ public class AnimalSearchView extends AbstractView implements FarmFilterAware {
             }
         }
         sexoCB.setModel(comboModel);
-        sexoCB.setSelectedIndex(0);
+        clearComboSelection(sexoCB);
     }
 
     private void loadRazaCombo() {
         DefaultComboBoxModel<ComboItem<Raza>> comboModel = new DefaultComboBoxModel<ComboItem<Raza>>();
-        comboModel.addElement(new ComboItem<Raza>(null, "Todas"));
         List<Raza> razas = razaService.findAll();
         if (razas != null) {
             for (Raza raza : razas) {
@@ -236,7 +234,12 @@ public class AnimalSearchView extends AbstractView implements FarmFilterAware {
             }
         }
         razaCB.setModel(comboModel);
-        razaCB.setSelectedIndex(0);
+        clearComboSelection(razaCB);
+    }
+
+    private <T> void clearComboSelection(JComboBox<ComboItem<T>> combo) {
+        combo.setSelectedIndex(-1);
+        combo.getEditor().setItem("");
     }
 
     @SuppressWarnings("unchecked")

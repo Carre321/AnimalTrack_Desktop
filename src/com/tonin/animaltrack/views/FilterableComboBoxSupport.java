@@ -1,6 +1,7 @@
 package com.tonin.animaltrack.views;
 
 import java.awt.Component;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -92,15 +93,9 @@ public final class FilterableComboBoxSupport {
         Object editorItem = combo.getEditor().getItem();
         String text = editorItem == null ? "" : editorItem.toString();
         Object selectedItem = combo.getSelectedItem();
-        String normalizedText = shouldIgnoreAsFilter(selectedItem, text, converter) ? "" : text.toLowerCase();
+        String normalizedText = shouldIgnoreAsFilter(selectedItem, text, converter) ? "" : normalize(text);
 
-        DefaultComboBoxModel<T> filteredModel = new DefaultComboBoxModel<T>();
-        for (T item : allItems) {
-            String itemText = converter.getPreferredStringForItem(item);
-            if (normalizedText.isEmpty() || itemText.toLowerCase().contains(normalizedText)) {
-                filteredModel.addElement(item);
-            }
-        }
+        DefaultComboBoxModel<T> filteredModel = buildPrioritizedModel(allItems, converter, normalizedText);
 
         filtering[0] = true;
         applyingText[0] = true;
@@ -121,6 +116,47 @@ public final class FilterableComboBoxSupport {
         }
     }
 
+    private static <T> DefaultComboBoxModel<T> buildPrioritizedModel(List<T> allItems,
+            GenericToStringConverter converter, String normalizedText) {
+        DefaultComboBoxModel<T> model = new DefaultComboBoxModel<T>();
+        if (normalizedText.isEmpty()) {
+            for (T item : allItems) {
+                model.addElement(item);
+            }
+            return model;
+        }
+
+        List<T> fixedItems = new ArrayList<T>();
+        List<T> startsWithMatches = new ArrayList<T>();
+        List<T> containsMatches = new ArrayList<T>();
+        List<T> otherItems = new ArrayList<T>();
+
+        for (T item : allItems) {
+            String itemText = normalize(converter.getPreferredStringForItem(item));
+            if (isFixedOption(item, itemText)) {
+                fixedItems.add(item);
+            } else if (itemText.startsWith(normalizedText)) {
+                startsWithMatches.add(item);
+            } else if (itemText.contains(normalizedText)) {
+                containsMatches.add(item);
+            } else {
+                otherItems.add(item);
+            }
+        }
+
+        addAll(model, fixedItems);
+        addAll(model, startsWithMatches);
+        addAll(model, containsMatches);
+        addAll(model, otherItems);
+        return model;
+    }
+
+    private static <T> void addAll(DefaultComboBoxModel<T> model, List<T> items) {
+        for (T item : items) {
+            model.addElement(item);
+        }
+    }
+
     private static <T> boolean containsItem(DefaultComboBoxModel<T> model, Object selectedItem) {
         for (int i = 0; i < model.getSize(); i++) {
             if (model.getElementAt(i) == selectedItem) {
@@ -131,7 +167,7 @@ public final class FilterableComboBoxSupport {
     }
 
     private static boolean shouldIgnoreAsFilter(Object selectedItem, String text, GenericToStringConverter converter) {
-        String normalizedText = text == null ? "" : text.trim().toLowerCase();
+        String normalizedText = normalize(text);
         if ("todos".equals(normalizedText) || "todas".equals(normalizedText)
                 || "sin seleccionar".equals(normalizedText)) {
             return true;
@@ -147,6 +183,19 @@ public final class FilterableComboBoxSupport {
             return true;
         }
         return false;
+    }
+
+    private static boolean isFixedOption(Object item, String normalizedText) {
+        return hasNullValue(item) || "todos".equals(normalizedText) || "todas".equals(normalizedText)
+                || "sin seleccionar".equals(normalizedText);
+    }
+
+    private static String normalize(String value) {
+        if (value == null) {
+            return "";
+        }
+        String normalized = Normalizer.normalize(value.trim().toLowerCase(), Normalizer.Form.NFD);
+        return normalized.replaceAll("\\p{M}", "");
     }
 
     private static boolean hasNullValue(Object item) {

@@ -261,9 +261,6 @@ public class VeterinarioCreateView extends AbstractView {
 
     private <T> void setModel(JComboBox<ComboItem<T>> combo, List<T> values, boolean includeEmpty) {
         DefaultComboBoxModel<ComboItem<T>> model = new DefaultComboBoxModel<ComboItem<T>>();
-        if (includeEmpty) {
-            model.addElement(new ComboItem<T>(null, "Sin seleccionar"));
-        }
         if (values != null) {
             for (T value : values) {
                 model.addElement(new ComboItem<T>(value, buildLabel(value)));

@@ -267,7 +267,6 @@ public class EventoSearchView extends AbstractView implements FarmFilterAware {
 
     private void loadTipoEventoCombo() {
         DefaultComboBoxModel<ComboItem<TipoEvento>> comboModel = new DefaultComboBoxModel<ComboItem<TipoEvento>>();
-        comboModel.addElement(new ComboItem<TipoEvento>(null, "Todos"));
         List<TipoEvento> tipos = tipoEventoService.findAll();
         if (tipos != null) {
             for (TipoEvento tipo : tipos) {
@@ -275,12 +274,11 @@ public class EventoSearchView extends AbstractView implements FarmFilterAware {
             }
         }
         tipoEventoCombo.setModel(comboModel);
-        tipoEventoCombo.setSelectedIndex(0);
+        clearComboSelection(tipoEventoCombo);
     }
 
     private void loadVeterinarioCombo() {
         DefaultComboBoxModel<ComboItem<VeterinarioDTO>> comboModel = new DefaultComboBoxModel<ComboItem<VeterinarioDTO>>();
-        comboModel.addElement(new ComboItem<VeterinarioDTO>(null, "Todos"));
         List<VeterinarioDTO> veterinarios = veterinarioService.findAll();
         if (veterinarios != null) {
             for (VeterinarioDTO veterinario : veterinarios) {
@@ -288,7 +286,12 @@ public class EventoSearchView extends AbstractView implements FarmFilterAware {
             }
         }
         veterinarioCombo.setModel(comboModel);
-        veterinarioCombo.setSelectedIndex(0);
+        clearComboSelection(veterinarioCombo);
+    }
+
+    private <T> void clearComboSelection(JComboBox<ComboItem<T>> combo) {
+        combo.setSelectedIndex(-1);
+        combo.getEditor().setItem("");
     }
 
     @SuppressWarnings("unchecked")

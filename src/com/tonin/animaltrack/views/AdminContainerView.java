@@ -361,28 +361,29 @@ public class AdminContainerView extends AbstractView {
             if ("rol".equals(field)) {
                 JComboBox<LookupItem> combo = new JComboBox<LookupItem>();
                 combo.setModel(new DefaultComboBoxModel<LookupItem>(new LookupItem[] {
-                        new LookupItem(null, null, ""),
                         new LookupItem(null, "ADMINISTRADOR", "Administrador"),
                         new LookupItem(null, "GANADERO", "Ganadero"),
                         new LookupItem(null, "VETERINARIO", "Veterinario")
                 }));
                 FilterableComboBoxSupport.decorate(combo);
+                clearLookupSelection(combo);
                 return combo;
             }
             if ("activo".equals(field)) {
                 JComboBox<LookupItem> combo = new JComboBox<LookupItem>();
                 combo.setModel(new DefaultComboBoxModel<LookupItem>(new LookupItem[] {
-                        new LookupItem(null, null, ""),
                         new LookupItem(null, "true", "Si"),
                         new LookupItem(null, "false", "No")
                 }));
+                clearLookupSelection(combo);
                 return combo;
             }
             Object lookupService = lookupServiceFor(field);
             if (lookupService != null) {
                 JComboBox<LookupItem> combo = new JComboBox<LookupItem>();
-                combo.setModel(new DefaultComboBoxModel<LookupItem>(lookupItems(lookupService, true)));
+                combo.setModel(new DefaultComboBoxModel<LookupItem>(lookupItems(lookupService, false)));
                 FilterableComboBoxSupport.decorate(combo);
+                clearLookupSelection(combo);
                 return combo;
             }
             return new JTextField(16);
@@ -455,11 +456,13 @@ public class AdminContainerView extends AbstractView {
             JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 6));
             add(top, BorderLayout.NORTH);
             firstCB = new JComboBox<LookupItem>();
-            firstCB.setModel(new DefaultComboBoxModel<LookupItem>(lookupItems(firstLookupService, true)));
+            firstCB.setModel(new DefaultComboBoxModel<LookupItem>(lookupItems(firstLookupService, false)));
             FilterableComboBoxSupport.decorate(firstCB);
             secondCB = new JComboBox<LookupItem>();
-            secondCB.setModel(new DefaultComboBoxModel<LookupItem>(lookupItems(secondLookupService, true)));
+            secondCB.setModel(new DefaultComboBoxModel<LookupItem>(lookupItems(secondLookupService, false)));
             FilterableComboBoxSupport.decorate(secondCB);
+            clearLookupSelection(firstCB);
+            clearLookupSelection(secondCB);
             top.add(new JLabel(firstLabel + ":"));
             top.add(firstCB);
             top.add(new JLabel(secondLabel + ":"));
@@ -672,9 +675,6 @@ public class AdminContainerView extends AbstractView {
 
     private static LookupItem[] lookupItems(Object service, boolean emptyFirst) {
         List<LookupItem> items = new ArrayList<LookupItem>();
-        if (emptyFirst) {
-            items.add(new LookupItem(null, null, ""));
-        }
         try {
             List<?> rows = (List<?>) service.getClass().getMethod("findAll").invoke(service);
             for (Object row : rows) {
@@ -705,7 +705,17 @@ public class AdminContainerView extends AbstractView {
 
     private static void selectLookupItem(JComboBox<?> combo, String value) {
         LookupItem item = findLookupItem(combo, value);
-        combo.setSelectedItem(item == null && combo.getItemCount() > 0 ? combo.getItemAt(0) : item);
+        combo.setSelectedItem(item);
+        if (item == null && combo.isEditable()) {
+            combo.getEditor().setItem("");
+        }
+    }
+
+    private static void clearLookupSelection(JComboBox<?> combo) {
+        combo.setSelectedIndex(-1);
+        if (combo.isEditable()) {
+            combo.getEditor().setItem("");
+        }
     }
 
     private static Long selectedId(JComboBox<LookupItem> combo) {

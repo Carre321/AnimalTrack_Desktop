@@ -39,6 +39,7 @@ import com.tonin.animaltrack.service.impl.VeterinarioGranjaServiceImpl;
 import com.tonin.animaltrack.views.FarmFilterAware;
 import com.tonin.animaltrack.views.FilterableComboBoxSupport;
 import com.tonin.animaltrack.views.AbstractView;
+import com.tonin.animaltrack.views.DashboardGanaderoView;
 import com.tonin.animaltrack.views.controler.OpenAdminController;
 import com.tonin.animaltrack.views.controler.OpenAnimalSearchController;
 import com.tonin.animaltrack.views.controler.OpenEventoSearchController;
@@ -257,6 +258,7 @@ public class MainWindow {
         usuarioButton.setText(user.getNombreVisible());
         usuarioButton.setToolTipText(user.getEmail() + " (" + user.getRol() + ")");
         loadFarmCombo(resolveAvailableFarms(user));
+        setView(new DashboardGanaderoView());
     }
 
     public Long getSelectedGranjaId() {
@@ -347,15 +349,15 @@ public class MainWindow {
 
     private void loadFarmCombo(List<GranjaDTO> granjas) {
         DefaultComboBoxModel<ComboItem<GranjaDTO>> model = new DefaultComboBoxModel<ComboItem<GranjaDTO>>();
-        model.addElement(new ComboItem<GranjaDTO>(null, "Todas"));
         if (granjas != null) {
             for (GranjaDTO granja : granjas) {
                 model.addElement(new ComboItem<GranjaDTO>(granja, granja.getNombre()));
             }
         }
         granjaComboBox.setModel(model);
-        granjaComboBox.setSelectedIndex(0);
-        granjaComboBox.setEnabled(model.getSize() > 1);
+        granjaComboBox.setSelectedIndex(-1);
+        granjaComboBox.getEditor().setItem("");
+        granjaComboBox.setEnabled(model.getSize() > 0);
         selectedGranjaId = null;
     }
 
