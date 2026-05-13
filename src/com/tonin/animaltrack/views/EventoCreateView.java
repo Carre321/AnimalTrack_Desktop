@@ -6,12 +6,16 @@ import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
@@ -51,6 +55,8 @@ import com.tonin.animaltrack.views.controler.EventoCreateController;
 
 public class EventoCreateView extends AbstractView {
 
+	private static Logger logger = LogManager.getLogger(EventoCreateView.class.getName());
+
     private JTextField idTF;
     private JComboBox<ComboItem<AnimalDTO>> animalCombo;
     private JComboBox<ComboItem<TipoEvento>> tipoEventoCombo;
@@ -61,6 +67,8 @@ public class EventoCreateView extends AbstractView {
     private JDateChooser fechaChooser;
     private JTextField horaTF;
     private JTextField precioTF;
+    private JTextField resultadoTF;
+    private JTextField observacionesTF;
 
     private AnimalService animalService;
     private TipoEventoService tipoEventoService;
@@ -106,6 +114,8 @@ public class EventoCreateView extends AbstractView {
         fechaChooser = new JDateChooser();
         horaTF = new JTextField(12);
         precioTF = new JTextField(12);
+        resultadoTF = new JTextField(12);
+        observacionesTF = new JTextField(24);
 
         addField(formPanel, row++, "Animal:", animalCombo);
         addField(formPanel, row++, "Tipo evento:", tipoEventoCombo);
@@ -113,6 +123,8 @@ public class EventoCreateView extends AbstractView {
         addField(formPanel, row++, "Fecha:", fechaChooser);
         addField(formPanel, row++, "Hora (HH:mm):", horaTF);
         addField(formPanel, row++, "Precio:", precioTF);
+        addField(formPanel, row++, "Resultado:", resultadoTF);
+        addField(formPanel, row++, "Observaciones:", observacionesTF);
         addField(formPanel, row++, "Semilla:", semillaCombo);
         addField(formPanel, row++, "Dosis:", dosisCombo);
         addField(formPanel, row++, "Tratamiento:", tratamientoCombo);
@@ -141,12 +153,26 @@ public class EventoCreateView extends AbstractView {
     }
 
     private void loadInitialData() {
-        setModel(animalCombo, animalService.findAll(), false);
-        setModel(tipoEventoCombo, tipoEventoService.findAll(), false);
-        setModel(veterinarioCombo, veterinarioService.findAll(), true);
-        setModel(semillaCombo, semillaService.findAll(), true);
-        setModel(dosisCombo, dosisService.findAll(), true);
-        setModel(tratamientoCombo, tratamientoService.findAll(), true);
+        try {
+            setModel(animalCombo, animalService.findAll(), false);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            setModel(animalCombo, null, false);
+        }
+        try {
+            setModel(tipoEventoCombo, tipoEventoService.findAll(), false);
+            setModel(veterinarioCombo, veterinarioService.findAll(), true);
+            setModel(semillaCombo, semillaService.findAll(), true);
+            setModel(dosisCombo, dosisService.findAll(), true);
+            setModel(tratamientoCombo, tratamientoService.findAll(), true);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            setModel(tipoEventoCombo, null, false);
+            setModel(veterinarioCombo, null, true);
+            setModel(semillaCombo, null, true);
+            setModel(dosisCombo, null, true);
+            setModel(tratamientoCombo, null, true);
+        }
     }
 
     public boolean createEvento() {
@@ -164,6 +190,7 @@ public class EventoCreateView extends AbstractView {
             clearForm();
             return true;
         } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             return false;
         }
@@ -187,6 +214,7 @@ public class EventoCreateView extends AbstractView {
                     JOptionPane.INFORMATION_MESSAGE);
             return true;
         } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             return false;
         }
@@ -206,6 +234,8 @@ public class EventoCreateView extends AbstractView {
         fechaChooser.setEnabled(editable);
         horaTF.setEditable(editable);
         precioTF.setEditable(editable);
+        resultadoTF.setEditable(editable);
+        observacionesTF.setEditable(editable);
         configureSecondaryButton(editable);
     }
 
@@ -231,6 +261,8 @@ public class EventoCreateView extends AbstractView {
             horaTF.setText(String.format("%02d:%02d", evento.getFechaHora().getHour(), evento.getFechaHora().getMinute()));
         }
         precioTF.setText(evento.getPrecioEvento() == null ? "" : String.valueOf(evento.getPrecioEvento()));
+        resultadoTF.setText(evento.getResultado() == null ? "" : evento.getResultado());
+        observacionesTF.setText(evento.getObservaciones() == null ? "" : evento.getObservaciones());
     }
 
     private Evento buildEvento() {
@@ -250,7 +282,9 @@ public class EventoCreateView extends AbstractView {
         evento.setDosisId(dosisItem == null || dosisItem.getValue() == null ? null : dosisItem.getValue().getId());
         evento.setTratamientoId(tratamientoItem == null || tratamientoItem.getValue() == null ? null : tratamientoItem.getValue().getId());
         evento.setFechaHora(buildFechaHora());
-        evento.setPrecioEvento(parseInteger(precioTF.getText()));
+        evento.setPrecioEvento(parseBigDecimal(precioTF.getText()));
+        evento.setResultado(trimToNull(resultadoTF.getText()));
+        evento.setObservaciones(trimToNull(observacionesTF.getText()));
         return evento;
     }
 
@@ -275,9 +309,9 @@ public class EventoCreateView extends AbstractView {
         return LocalDateTime.of(date, LocalTime.of(hh, mm));
     }
 
-    private Integer parseInteger(String value) {
+    private BigDecimal parseBigDecimal(String value) {
         String trimmed = trimToNull(value);
-        return trimmed == null ? null : Integer.valueOf(trimmed);
+        return trimmed == null ? null : new BigDecimal(trimmed.replace(',', '.'));
     }
 
     private Long parseLong(String value) {
@@ -297,6 +331,8 @@ public class EventoCreateView extends AbstractView {
         fechaChooser.setDate(null);
         horaTF.setText("");
         precioTF.setText("");
+        resultadoTF.setText("");
+        observacionesTF.setText("");
         configureSecondaryButton(true);
     }
 
@@ -379,8 +415,13 @@ public class EventoCreateView extends AbstractView {
         }
         if (value instanceof Dosis) {
             Dosis dosis = (Dosis) value;
-            Tratamiento tratamiento = dosis.getTratamientoId() == null ? null
-                    : tratamientoService.findById(dosis.getTratamientoId());
+            Tratamiento tratamiento = null;
+            try {
+                tratamiento = dosis.getTratamientoId() == null ? null
+                        : tratamientoService.findById(dosis.getTratamientoId());
+            } catch (Exception e) {
+                logger.error(e.getMessage(), e);
+            }
             String nombreTratamiento = tratamiento == null || tratamiento.getNombre() == null
                     ? ""
                     : " - " + tratamiento.getNombre();

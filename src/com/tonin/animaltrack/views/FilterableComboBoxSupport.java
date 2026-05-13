@@ -72,7 +72,7 @@ public final class FilterableComboBoxSupport {
             }
 
             private void scheduleFilter() {
-                if (applyingText[0]) {
+                if (applyingText[0] || filtering[0]) {
                     return;
                 }
                 SwingUtilities.invokeLater(() -> filterModel(combo, allItems, converter, filtering, applyingText, true));
@@ -108,7 +108,13 @@ public final class FilterableComboBoxSupport {
                 combo.getEditor().setItem(text);
             }
             if (updatePopupVisibility && combo.isShowing()) {
-                combo.setPopupVisible(filteredModel.getSize() > 0);
+                boolean userIsEditing = combo.hasFocus() || combo.getEditor().getEditorComponent().hasFocus();
+                boolean hasTypedFilter = !normalize(text).isEmpty() && !shouldIgnoreAsFilter(selectedItem, text, converter);
+                if (userIsEditing && hasTypedFilter && filteredModel.getSize() > 0) {
+                    combo.setPopupVisible(true);
+                } else {
+                    combo.setPopupVisible(false);
+                }
             }
         } finally {
             applyingText[0] = false;

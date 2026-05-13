@@ -19,6 +19,8 @@ import javax.swing.table.DefaultTableModel;
 
 import org.jdesktop.swingx.JXTable;
 import org.jdesktop.swingx.JXSearchField;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import com.tonin.animaltrack.dao.criteria.VeterinarioCriteria;
 import com.tonin.animaltrack.model.dto.VeterinarioDTO;
@@ -29,6 +31,8 @@ import com.tonin.animaltrack.views.controler.VeterinarioSetEditableController;
 import com.tonin.animaltrack.views.controler.VeterinarioSearchController;
 
 public class VeterinarioSearchView extends AbstractView implements FarmFilterAware {
+    private static Logger logger = LogManager.getLogger(VeterinarioSearchView.class.getName());
+
     private static final String NO_MATCHES_MESSAGE = "No hay coincidencias con el filtro de busqueda.";
 
     private JTextField codigoTF;
@@ -203,7 +207,13 @@ public class VeterinarioSearchView extends AbstractView implements FarmFilterAwa
             return;
         }
 
-        VeterinarioDTO veterinario = veterinarioService.findById(this.model.get(modelRow).getId());
+        VeterinarioDTO veterinario = null;
+        try {
+            veterinario = veterinarioService.findById(this.model.get(modelRow).getId());
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return;
+        }
         if (veterinario == null) {
             return;
         }

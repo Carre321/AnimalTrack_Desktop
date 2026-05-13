@@ -19,11 +19,16 @@ import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.tonin.animaltrack.model.dto.UsuarioLoginDTO;
 import com.tonin.animaltrack.service.AuthService;
 import com.tonin.animaltrack.service.impl.AuthServiceImpl;
 
 public class LoginWindow {
+
+    private static Logger logger = LogManager.getLogger(LoginWindow.class.getName());
 
     private JFrame frame;
     private JTextField emailTF;
@@ -132,7 +137,14 @@ public class LoginWindow {
     private void doLogin() {
         String email = emailTF.getText();
         String password = new String(passwordPF.getPassword());
-        UsuarioLoginDTO user = authService.login(email, password);
+        UsuarioLoginDTO user = null;
+        try {
+            user = authService.login(email, password);
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            JOptionPane.showMessageDialog(frame, "No se pudo iniciar sesion.", "Login", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
         if (user == null) {
             JOptionPane.showMessageDialog(frame, "Email o contraseña incorrectos.", "Login",
                     JOptionPane.WARNING_MESSAGE);

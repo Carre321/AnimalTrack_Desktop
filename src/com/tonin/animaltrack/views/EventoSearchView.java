@@ -23,8 +23,11 @@ import javax.swing.table.DefaultTableModel;
 
 import org.jdesktop.swingx.JXTable;
 import org.jdesktop.swingx.JXSearchField;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import com.toedter.calendar.JDateChooser;
+import com.tonin.animaltrack.dao.Results;
 import com.tonin.animaltrack.dao.criteria.EventoCriteria;
 import com.tonin.animaltrack.model.TipoEvento;
 import com.tonin.animaltrack.model.dto.EventoDTO;
@@ -40,7 +43,10 @@ import com.tonin.animaltrack.views.controler.EventoSetEditableController;
 import com.tonin.animaltrack.views.controler.EventoSearchController;
 
 public class EventoSearchView extends AbstractView implements FarmFilterAware {
+    private static Logger logger = LogManager.getLogger(EventoSearchView.class.getName());
+
     private static final String NO_MATCHES_MESSAGE = "No hay coincidencias con el filtro de busqueda.";
+    private static final int PAGE_SIZE = 20;
 
     private JTextField animalIdTF;
     private JXTable resultadosTable;
@@ -54,8 +60,13 @@ public class EventoSearchView extends AbstractView implements FarmFilterAware {
     private VeterinarioService veterinarioService;
     private List<EventoDTO> model;
     private JButton buscarButton;
+    private JButton anteriorButton;
+    private JButton siguienteButton;
+    private JLabel paginaLabel;
+    private JLabel totalResultadosLabel;
     private EventoSearchController searchController;
     private EventoContainerView containerView;
+    private int paginaActual = 1;
 
     public EventoSearchView() {
         this(null);
@@ -95,14 +106,12 @@ public class EventoSearchView extends AbstractView implements FarmFilterAware {
         buscarPanel.add(lblTipoEvento);
 
         tipoEventoCombo = new JComboBox<ComboItem<TipoEvento>>();
-        FilterableComboBoxSupport.decorate(tipoEventoCombo);
         buscarPanel.add(tipoEventoCombo);
 
         JLabel lblVeterinario = new JLabel("Veterinario:");
         buscarPanel.add(lblVeterinario);
 
         veterinarioCombo = new JComboBox<ComboItem<VeterinarioDTO>>();
-        FilterableComboBoxSupport.decorate(veterinarioCombo);
         buscarPanel.add(veterinarioCombo);
 
         JLabel fechaDesdeLabel = new JLabel("Fecha Desde:");
@@ -125,6 +134,25 @@ public class EventoSearchView extends AbstractView implements FarmFilterAware {
         resultadosTable.setColumnControlVisible(true);
         resultadosTable.setSortable(true);
         add(new JScrollPane(resultadosTable), BorderLayout.CENTER);
+
+        JPanel paginationPanel = new JPanel();
+        FlowLayout paginationLayout = (FlowLayout) paginationPanel.getLayout();
+        paginationLayout.setAlignment(FlowLayout.CENTER);
+        add(paginationPanel, BorderLayout.SOUTH);
+
+        anteriorButton = new JButton("<<");
+        paginaLabel = new JLabel("Pagina 1 de 1");
+        siguienteButton = new JButton(">>");
+        totalResultadosLabel = new JLabel("Total: 0 resultados");
+
+        paginationPanel.add(anteriorButton);
+        paginationPanel.add(paginaLabel);
+        paginationPanel.add(siguienteButton);
+        paginationPanel.add(totalResultadosLabel);
+
+        anteriorButton.setVisible(false);
+        paginaLabel.setVisible(false);
+        siguienteButton.setVisible(false);
     }
 
     private void initServices() {
@@ -136,14 +164,19 @@ public class EventoSearchView extends AbstractView implements FarmFilterAware {
     }
 
     private void postInitialize() {
+        FilterableComboBoxSupport.decorate(tipoEventoCombo);
+        FilterableComboBoxSupport.decorate(veterinarioCombo);
+
         searchController = new EventoSearchController(this);
         buscarButton.setAction(searchController);
+        anteriorButton.addActionListener(e -> searchController.buscarPagina(paginaActual - 1));
+        siguienteButton.addActionListener(e -> searchController.buscarPagina(paginaActual + 1));
         animalNombreTF.addKeyListener(searchController);
         animalIdTF.addKeyListener(searchController);
-        tipoEventoCombo.addActionListener(e -> searchController.doAction());
-        veterinarioCombo.addActionListener(e -> searchController.doAction());
-        fechaDesdeDateChooser.addPropertyChangeListener("date", e -> searchController.doAction());
-        fechaHastaDateChooser.addPropertyChangeListener("date", e -> searchController.doAction());
+        tipoEventoCombo.addItemListener(searchController);
+        veterinarioCombo.addItemListener(searchController);
+        fechaDesdeDateChooser.addPropertyChangeListener("date", e -> searchController.buscarPagina(1));
+        fechaHastaDateChooser.addPropertyChangeListener("date", e -> searchController.buscarPagina(1));
         resultadosTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -196,7 +229,7 @@ public class EventoSearchView extends AbstractView implements FarmFilterAware {
     @Override
     public void refreshForSelectedFarm() {
         if (searchController != null) {
-            searchController.doAction();
+            searchController.buscarPagina(1);
         }
     }
 
@@ -205,9 +238,22 @@ public class EventoSearchView extends AbstractView implements FarmFilterAware {
         updateView();
     }
 
+    public int getPageSize() {
+        return PAGE_SIZE;
+    }
+
+    public void setResults(Results<EventoDTO> results, int pagina) {
+        this.model = results == null ? Collections.<EventoDTO>emptyList() : results.getPageResults();
+        updateView(results == null ? 0 : results.getTotal(), pagina);
+    }
+
     public void updateView() {
+        updateView(model == null ? 0 : model.size(), 1);
+    }
+
+    public void updateView(int total, int pagina) {
         DefaultTableModel model = new DefaultTableModel(
-                new Object[] { "Animal", "Crotal", "Tipo Evento", "Veterinario", "Fecha", "Precio" }, 0) {
+                new Object[] { "Animal", "Crotal", "Tipo Evento", "Resultado", "Veterinario", "Fecha", "Precio" }, 0) {
                     private static final long serialVersionUID = 1L;
 
                     @Override
@@ -217,13 +263,14 @@ public class EventoSearchView extends AbstractView implements FarmFilterAware {
                 };
 
         if (this.model.isEmpty()) {
-            model.addRow(new Object[] { NO_MATCHES_MESSAGE, null, null, null, null, null });
+            model.addRow(new Object[] { NO_MATCHES_MESSAGE, null, null, null, null, null, null });
         } else {
             for (EventoDTO dto : this.model) {
                 model.addRow(new Object[] {
                         dto.getAnimalNombre(),
                         dto.getAnimalCrotal(),
                         dto.getTipoEventoNombre(),
+                        dto.getResultado(),
                         dto.getVeterinarioNombreCompleto(),
                         dto.getFechaHora(),
                         dto.getPrecioEvento() });
@@ -231,6 +278,21 @@ public class EventoSearchView extends AbstractView implements FarmFilterAware {
         }
 
         resultadosTable.setModel(model);
+
+        paginaActual = pagina < 1 ? 1 : pagina;
+        int totalPaginas = (int) Math.ceil((double) total / PAGE_SIZE);
+        if (totalPaginas == 0) {
+            totalPaginas = 1;
+        }
+
+        boolean mostrarPaginacion = total > PAGE_SIZE;
+        anteriorButton.setVisible(mostrarPaginacion);
+        paginaLabel.setVisible(mostrarPaginacion);
+        siguienteButton.setVisible(mostrarPaginacion);
+        anteriorButton.setEnabled(paginaActual > 1);
+        siguienteButton.setEnabled(paginaActual < totalPaginas);
+        paginaLabel.setText("Pagina " + paginaActual + " de " + totalPaginas);
+        totalResultadosLabel.setText("Total: " + total + " resultados");
     }
 
     private void openSelectedEventoDetail() {
@@ -247,7 +309,13 @@ public class EventoSearchView extends AbstractView implements FarmFilterAware {
             return;
         }
 
-        EventoDTO evento = eventoService.findById(this.model.get(modelRow).getId());
+        EventoDTO evento = null;
+        try {
+            evento = eventoService.findById(this.model.get(modelRow).getId());
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return;
+        }
         if (evento == null) {
             return;
         }
@@ -267,11 +335,15 @@ public class EventoSearchView extends AbstractView implements FarmFilterAware {
 
     private void loadTipoEventoCombo() {
         DefaultComboBoxModel<ComboItem<TipoEvento>> comboModel = new DefaultComboBoxModel<ComboItem<TipoEvento>>();
-        List<TipoEvento> tipos = tipoEventoService.findAll();
-        if (tipos != null) {
-            for (TipoEvento tipo : tipos) {
-                comboModel.addElement(new ComboItem<TipoEvento>(tipo, tipo.getNombre()));
+        try {
+            List<TipoEvento> tipos = tipoEventoService.findAll();
+            if (tipos != null) {
+                for (TipoEvento tipo : tipos) {
+                    comboModel.addElement(new ComboItem<TipoEvento>(tipo, tipo.getNombre()));
+                }
             }
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
         }
         tipoEventoCombo.setModel(comboModel);
         clearComboSelection(tipoEventoCombo);
@@ -279,11 +351,15 @@ public class EventoSearchView extends AbstractView implements FarmFilterAware {
 
     private void loadVeterinarioCombo() {
         DefaultComboBoxModel<ComboItem<VeterinarioDTO>> comboModel = new DefaultComboBoxModel<ComboItem<VeterinarioDTO>>();
-        List<VeterinarioDTO> veterinarios = veterinarioService.findAll();
-        if (veterinarios != null) {
-            for (VeterinarioDTO veterinario : veterinarios) {
-                comboModel.addElement(new ComboItem<VeterinarioDTO>(veterinario, veterinario.getNombreCompleto()));
+        try {
+            List<VeterinarioDTO> veterinarios = veterinarioService.findAll();
+            if (veterinarios != null) {
+                for (VeterinarioDTO veterinario : veterinarios) {
+                    comboModel.addElement(new ComboItem<VeterinarioDTO>(veterinario, veterinario.getNombreCompleto()));
+                }
             }
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
         }
         veterinarioCombo.setModel(comboModel);
         clearComboSelection(veterinarioCombo);

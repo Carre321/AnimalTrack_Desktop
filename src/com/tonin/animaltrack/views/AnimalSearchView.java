@@ -9,14 +9,18 @@ import javax.swing.JButton;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jdesktop.swingx.JXSearchField;
 import org.jdesktop.swingx.JXTable;
+import com.tonin.animaltrack.dao.Results;
 import com.tonin.animaltrack.dao.criteria.AnimalCriteria;
 import com.tonin.animaltrack.model.Raza;
 import com.tonin.animaltrack.model.Sexo;
@@ -38,6 +42,8 @@ import com.tonin.animaltrack.views.tableModel.AnimalTableModel;
 public class AnimalSearchView extends AbstractView implements FarmFilterAware {
     private static final long serialVersionUID = 1L;
     private static final String NO_MATCHES_MESSAGE = "No hay coincidencias con el filtro de busqueda.";
+    private static final int PAGE_SIZE = 20;
+    private static Logger logger = LogManager.getLogger(AnimalSearchView.class.getName());
 
     private AnimalService animalService;
     private SexoService sexoService;
@@ -47,11 +53,15 @@ public class AnimalSearchView extends AbstractView implements FarmFilterAware {
     private JTextField crotalTF;
     private JXTable resultsTable;
     private JLabel totalResultadosLabel;
+    private JLabel paginaLabel;
+    private JButton anteriorButton;
+    private JButton siguienteButton;
     private JButton searchButton;
     private JComboBox<ComboItem<Sexo>> sexoCB;
     private JComboBox<ComboItem<Raza>> razaCB;
     private AnimalContainerView containerView;
     private AnimalSearchController searchController;
+    private int paginaActual = 1;
 
     public AnimalSearchView() {
         this(null);
@@ -114,15 +124,26 @@ public class AnimalSearchView extends AbstractView implements FarmFilterAware {
         resultsTable = new JXTable();
         resultsTable.setColumnControlVisible(true);
         resultsTable.setSortable(true);
-        resultsPanel.add(resultsTable, BorderLayout.CENTER);
+        resultsPanel.add(new JScrollPane(resultsTable), BorderLayout.CENTER);
         
         JPanel paginationPanel = new JPanel();
         FlowLayout fl_paginationPanel = (FlowLayout) paginationPanel.getLayout();
-        fl_paginationPanel.setAlignment(FlowLayout.LEFT);
+        fl_paginationPanel.setAlignment(FlowLayout.CENTER);
         contentPane.add(paginationPanel, BorderLayout.SOUTH);
         
-        totalResultadosLabel = new JLabel("");
+        anteriorButton = new JButton("<<");
+        paginaLabel = new JLabel("Pagina 1 de 1");
+        siguienteButton = new JButton(">>");
+        totalResultadosLabel = new JLabel("Total: 0 resultados");
+
+        paginationPanel.add(anteriorButton);
+        paginationPanel.add(paginaLabel);
+        paginationPanel.add(siguienteButton);
         paginationPanel.add(totalResultadosLabel);
+
+        anteriorButton.setVisible(false);
+        paginaLabel.setVisible(false);
+        siguienteButton.setVisible(false);
     }
 
     private void initServices() {
@@ -140,6 +161,8 @@ public class AnimalSearchView extends AbstractView implements FarmFilterAware {
     	
         searchController = new AnimalSearchController(this);
         searchButton.setAction(searchController);
+        anteriorButton.addActionListener(e -> searchController.buscarPagina(paginaActual - 1));
+        siguienteButton.addActionListener(e -> searchController.buscarPagina(paginaActual + 1));
         crotalTF.addKeyListener(searchController);
         sexoCB.addItemListener(searchController);
         razaCB.addItemListener(searchController);
@@ -178,7 +201,7 @@ public class AnimalSearchView extends AbstractView implements FarmFilterAware {
     @Override
     public void refreshForSelectedFarm() {
         if (searchController != null) {
-            searchController.doAction();
+            searchController.buscarPagina(1);
         }
     }
     
@@ -198,6 +221,40 @@ public class AnimalSearchView extends AbstractView implements FarmFilterAware {
         totalResultadosLabel.setText(rows.size() + " Resultados Encontrados");
     }
 
+    public int getPageSize() {
+        return PAGE_SIZE;
+    }
+
+    public void setResults(Results<AnimalDTO> results, int pagina) {
+        this.model = results == null ? Collections.<AnimalDTO>emptyList() : results.getPageResults();
+        updateView(results == null ? 0 : results.getTotal(), pagina);
+    }
+
+    public void updateView(int total, int pagina) {
+        List<AnimalDTO> rows = model == null ? Collections.<AnimalDTO>emptyList() : model;
+        if (rows.isEmpty()) {
+            resultsTable.setModel(noMatchesTableModel(new Object[] { "Crotal", "Nombre", "Raza", "Sexo", "Granja" }));
+        } else {
+            resultsTable.setModel(new AnimalTableModel(rows));
+            resultsTable.setDefaultRenderer(AnimalDTO.class, new AnimalTableRenderer());
+        }
+
+        paginaActual = pagina < 1 ? 1 : pagina;
+        int totalPaginas = (int) Math.ceil((double) total / PAGE_SIZE);
+        if (totalPaginas == 0) {
+            totalPaginas = 1;
+        }
+
+        boolean mostrarPaginacion = total > PAGE_SIZE;
+        anteriorButton.setVisible(mostrarPaginacion);
+        paginaLabel.setVisible(mostrarPaginacion);
+        siguienteButton.setVisible(mostrarPaginacion);
+        anteriorButton.setEnabled(paginaActual > 1);
+        siguienteButton.setEnabled(paginaActual < totalPaginas);
+        paginaLabel.setText("Pagina " + paginaActual + " de " + totalPaginas);
+        totalResultadosLabel.setText("Total: " + total + " resultados");
+    }
+
     private DefaultTableModel noMatchesTableModel(Object[] columns) {
         DefaultTableModel tableModel = new DefaultTableModel(columns, 0) {
             private static final long serialVersionUID = 1L;
@@ -215,11 +272,15 @@ public class AnimalSearchView extends AbstractView implements FarmFilterAware {
 
     private void loadSexoCombo() {
         DefaultComboBoxModel<ComboItem<Sexo>> comboModel = new DefaultComboBoxModel<ComboItem<Sexo>>();
-        List<Sexo> sexos = sexoService.findAll();
-        if (sexos != null) {
-            for (Sexo sexo : sexos) {
-                comboModel.addElement(new ComboItem<Sexo>(sexo, sexo.getNombre()));
+        try {
+            List<Sexo> sexos = sexoService.findAll();
+            if (sexos != null) {
+                for (Sexo sexo : sexos) {
+                    comboModel.addElement(new ComboItem<Sexo>(sexo, sexo.getNombre()));
+                }
             }
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
         }
         sexoCB.setModel(comboModel);
         clearComboSelection(sexoCB);
@@ -227,11 +288,15 @@ public class AnimalSearchView extends AbstractView implements FarmFilterAware {
 
     private void loadRazaCombo() {
         DefaultComboBoxModel<ComboItem<Raza>> comboModel = new DefaultComboBoxModel<ComboItem<Raza>>();
-        List<Raza> razas = razaService.findAll();
-        if (razas != null) {
-            for (Raza raza : razas) {
-                comboModel.addElement(new ComboItem<Raza>(raza, raza.getNombre()));
+        try {
+            List<Raza> razas = razaService.findAll();
+            if (razas != null) {
+                for (Raza raza : razas) {
+                    comboModel.addElement(new ComboItem<Raza>(raza, raza.getNombre()));
+                }
             }
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
         }
         razaCB.setModel(comboModel);
         clearComboSelection(razaCB);
@@ -265,7 +330,13 @@ public class AnimalSearchView extends AbstractView implements FarmFilterAware {
             return;
         }
 
-        AnimalDTO animal = animalService.findById(model.get(modelRow).getId());
+        AnimalDTO animal;
+        try {
+            animal = animalService.findById(model.get(modelRow).getId());
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            return;
+        }
         if (animal == null) {
             return;
         }

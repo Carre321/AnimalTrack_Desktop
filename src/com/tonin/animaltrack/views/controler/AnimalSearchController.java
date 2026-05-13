@@ -5,10 +5,14 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.util.List;
 
 import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+import com.tonin.animaltrack.dao.Results;
 import com.tonin.animaltrack.dao.criteria.AnimalCriteria;
 import com.tonin.animaltrack.model.dto.AnimalDTO;
 import com.tonin.animaltrack.service.AnimalService;
@@ -17,6 +21,8 @@ import com.tonin.animaltrack.views.AnimalSearchView;
 
 public class AnimalSearchController extends Controller 
 implements KeyListener, ItemListener {
+
+	private static Logger logger = LogManager.getLogger(AnimalSearchController.class.getName());
 
 	private AnimalSearchView view = null;
 	private AnimalService service = null;
@@ -29,9 +35,23 @@ implements KeyListener, ItemListener {
 	}
 
 	public void doAction () {
+		buscarPagina(1);
+	}
+
+	public void buscarPagina(int pagina) {
+		if (pagina < 1) {
+			pagina = 1;
+		}
 		AnimalCriteria criteria = view.getCriteria();
-		List<AnimalDTO> results = service.findByCriteria(criteria);
-		view.setModel(results);
+		try {
+			int pageSize = view.getPageSize();
+			int from = ((pagina - 1) * pageSize) + 1;
+			Results<AnimalDTO> results = service.findByCriteria(criteria, from, pageSize);
+			view.setResults(results, pagina);
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			JOptionPane.showMessageDialog(view, e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+		}
 	}
 	
 	@Override
@@ -54,13 +74,15 @@ implements KeyListener, ItemListener {
 	public void keyReleased(KeyEvent e) {	
 		AnimalCriteria criteria = view.getCriteria();
 		if (criteria.getCrotalLike()!= null && criteria.getCrotalLike().length()>=4) {
-			doAction();	
+			buscarPagina(1);
 		}
 	}
 
 	@Override
 	public void itemStateChanged(ItemEvent e) {
-		doAction();
+		if (e.getStateChange() == ItemEvent.SELECTED) {
+			buscarPagina(1);
+		}
 		
 	}
 

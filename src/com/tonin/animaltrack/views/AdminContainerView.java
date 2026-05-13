@@ -13,6 +13,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -76,6 +79,8 @@ import com.tonin.animaltrack.service.impl.VeterinarioGranjaServiceImpl;
 import com.tonin.animaltrack.service.impl.VeterinarioServiceImpl;
 
 public class AdminContainerView extends AbstractView {
+
+	private static Logger logger = LogManager.getLogger(AdminContainerView.class.getName());
 
     private static final long serialVersionUID = 1L;
     private static final String NO_MATCHES_MESSAGE = "No hay coincidencias con el filtro de busqueda.";
@@ -596,7 +601,11 @@ public class AdminContainerView extends AbstractView {
                     List<?> rows = (List<?>) item.service.getClass().getMethod("findAll").invoke(item.service);
                     DefaultTableModel model = new DefaultTableModel(new Object[] { "ID", "Nombre", "Extra" }, 0);
                     for (Object row : rows) {
-                        model.addRow(new Object[] { invoke(row, "getId"), invoke(row, "getNombre"), invoke(row, "getProvinciaId") });
+                        Object extra = invoke(row, "getCodigo");
+                        if (extra == null) {
+                            extra = invoke(row, "getProvinciaId");
+                        }
+                        model.addRow(new Object[] { invoke(row, "getId"), invoke(row, "getNombre"), extra });
                     }
                     table.setModel(model);
                 } catch (Exception ex) {
@@ -842,6 +851,7 @@ public class AdminContainerView extends AbstractView {
     }
 
     private static void showError(Exception ex) {
+        logger.error(rootMessage(ex), ex);
         JOptionPane.showMessageDialog(null, rootMessage(ex), "Administracion", JOptionPane.ERROR_MESSAGE);
     }
 

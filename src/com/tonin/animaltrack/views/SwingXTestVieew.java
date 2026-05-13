@@ -2,9 +2,14 @@ package com.tonin.animaltrack.views;
 
 import java.awt.EventQueue;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import javax.swing.JFrame;
 
 public class SwingXTestVieew {
+
+	private static Logger logger = LogManager.getLogger(SwingXTestVieew.class.getName());
 
 	private JFrame frame;
 
@@ -18,7 +23,7 @@ public class SwingXTestVieew {
 					SwingXTestVieew window = new SwingXTestVieew();
 					window.frame.setVisible(true);
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.error(e.getMessage(), e);
 				}
 			}
 		});

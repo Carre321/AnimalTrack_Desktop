@@ -27,8 +27,11 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableCellRenderer;
 
 import org.jdesktop.swingx.JXTable;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import com.tonin.animaltrack.dao.criteria.EventoCriteria;
 import com.tonin.animaltrack.model.dto.EventoDTO;
@@ -38,13 +41,24 @@ import com.tonin.animaltrack.ui.MainWindow;
 
 public class DashboardGanaderoView extends AbstractView implements FarmFilterAware {
 
+    private static Logger logger = LogManager.getLogger(DashboardGanaderoView.class.getName());
+
     private static final int MESES_PRENEZ = 9;
     private static final int DIAS_PROXIMOS = 15;
-    private static final String TIPO_INSEMINACION_ARTIFICIAL = "Inseminacion Artificial";
-    private static final String TIPO_INSEMINACION_NATURAL = "Inseminacion Natural";
-    private static final String TIPO_DIAGNOSTICO_PRENEZ = "Diagnostico Prenez";
-    private static final String TIPO_REVISION_VETERINARIO = "Revision Veterinario";
-    private static final String TIPO_PARTO = "Parto";
+    private static final String CODIGO_INSEMINACION_ARTIFICIAL = "IA";
+    private static final String CODIGO_INSEMINACION_NATURAL = "IN";
+    private static final String CODIGO_DIAGNOSTICO_PRENEZ = "PRENEZ";
+    private static final String CODIGO_REVISION_VETERINARIO = "REVISION";
+    private static final String CODIGO_PARTO = "PARTO";
+    private static final String CODIGO_ABORTO = "ABORTO";
+    private static final String RESULTADO_POSITIVO = "POSITIVO";
+    private static final Color TOTAL_COLOR = new Color(0, 83, 95);
+    private static final Color MIENTEN_COLOR = new Color(171, 74, 0);
+    private static final Color PROXIMAS_COLOR = new Color(34, 125, 70);
+    private static final Color HOY_COLOR = new Color(0, 96, 150);
+    private static final Color MIENTEN_BACKGROUND = new Color(255, 244, 232);
+    private static final Color PROXIMAS_BACKGROUND = new Color(239, 249, 243);
+    private static final Color HOY_BACKGROUND = new Color(231, 244, 252);
 
     private final EventoService eventoService;
     private final JLabel totalLabel;
@@ -61,7 +75,7 @@ public class DashboardGanaderoView extends AbstractView implements FarmFilterAwa
         this.mientenLabel = new JLabel("0");
         this.proximasLabel = new JLabel("0");
         this.granjaLabel = new JLabel();
-        this.table = new JXTable();
+        this.table = new DashboardTable();
         initialize();
         refreshForSelectedFarm();
     }
@@ -81,10 +95,10 @@ public class DashboardGanaderoView extends AbstractView implements FarmFilterAwa
 
         JLabel titleLabel = new JLabel("Vacas próximas a cumplir preñez");
         titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD, 22f));
-        titleLabel.setForeground(new Color(0, 83, 95));
+        titleLabel.setForeground(TOTAL_COLOR);
         headerPanel.add(titleLabel, BorderLayout.NORTH);
 
-        JLabel subtitleLabel = new JLabel("Última inseminación + revisión/diagnóstico, sin parto registrado después.");
+        JLabel subtitleLabel = new JLabel("Última inseminación + revisión/diagnóstico positivo, sin parto ni aborto después.");
         subtitleLabel.setForeground(new Color(86, 99, 105));
         headerPanel.add(subtitleLabel, BorderLayout.CENTER);
 
@@ -106,14 +120,14 @@ public class DashboardGanaderoView extends AbstractView implements FarmFilterAwa
         gbc.gridy = 0;
 
         gbc.gridx = 0;
-        summaryPanel.add(createStatCard("En la lista", totalLabel, new Color(0, 83, 95)), gbc);
+        summaryPanel.add(createStatCard("En la lista", totalLabel, TOTAL_COLOR), gbc);
 
         gbc.gridx = 1;
-        summaryPanel.add(createStatCard("Mienten", mientenLabel, new Color(171, 74, 0)), gbc);
+        summaryPanel.add(createStatCard("Mienten", mientenLabel, MIENTEN_COLOR), gbc);
 
         gbc.gridx = 2;
         gbc.insets = new Insets(0, 0, 14, 0);
-        summaryPanel.add(createStatCard("Próximos 15 días", proximasLabel, new Color(34, 125, 70)), gbc);
+        summaryPanel.add(createStatCard("Próximos 15 días", proximasLabel, PROXIMAS_COLOR), gbc);
 
         JPanel tablePanel = new JPanel(new BorderLayout(0, 8));
         tablePanel.setBackground(Color.WHITE);
@@ -131,7 +145,6 @@ public class DashboardGanaderoView extends AbstractView implements FarmFilterAwa
 
         table.setColumnControlVisible(true);
         table.setSortable(true);
-        table.setDefaultRenderer(Object.class, new StatusTableRenderer());
         tablePanel.add(new JScrollPane(table), BorderLayout.CENTER);
 
         gbc.gridx = 0;
@@ -170,7 +183,13 @@ public class DashboardGanaderoView extends AbstractView implements FarmFilterAwa
         EventoCriteria criteria = new EventoCriteria();
         criteria.setGranjaId(MainWindow.getInstance().getSelectedGranjaId());
 
-        List<EventoDTO> eventos = eventoService.findByCriteria(criteria);
+        List<EventoDTO> eventos = null;
+        try {
+            eventos = eventoService.findByCriteria(criteria);
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            return Collections.emptyList();
+        }
         if (eventos == null || eventos.isEmpty()) {
             return Collections.emptyList();
         }
@@ -193,10 +212,10 @@ public class DashboardGanaderoView extends AbstractView implements FarmFilterAwa
             if (inseminacion == null) {
                 continue;
             }
-            if (!hasConfirmacionAfter(animalEventos, inseminacion.getFechaHora())) {
+            if (!hasConfirmacionPositivaAfter(animalEventos, inseminacion.getFechaHora())) {
                 continue;
             }
-            if (hasPartoAfter(animalEventos, inseminacion.getFechaHora())) {
+            if (hasCierreGestacionAfter(animalEventos, inseminacion.getFechaHora())) {
                 continue;
             }
 
@@ -205,7 +224,7 @@ public class DashboardGanaderoView extends AbstractView implements FarmFilterAwa
                 continue;
             }
 
-            result.add(new ProximoPartoRow(inseminacion, findLastConfirmacionAfter(animalEventos, inseminacion.getFechaHora()),
+            result.add(new ProximoPartoRow(inseminacion, findLastConfirmacionPositivaAfter(animalEventos, inseminacion.getFechaHora()),
                     finPrenez, ChronoUnit.DAYS.between(today, finPrenez)));
         }
 
@@ -217,42 +236,50 @@ public class DashboardGanaderoView extends AbstractView implements FarmFilterAwa
     private EventoDTO findLastInseminacion(List<EventoDTO> eventos) {
         EventoDTO last = null;
         for (EventoDTO evento : eventos) {
-            if (isTipo(evento, TIPO_INSEMINACION_ARTIFICIAL) || isTipo(evento, TIPO_INSEMINACION_NATURAL)) {
+            if (isTipo(evento, CODIGO_INSEMINACION_ARTIFICIAL) || isTipo(evento, CODIGO_INSEMINACION_NATURAL)) {
                 last = evento;
             }
         }
         return last;
     }
 
-    private EventoDTO findLastConfirmacionAfter(List<EventoDTO> eventos, LocalDateTime fechaInseminacion) {
+    private EventoDTO findLastConfirmacionPositivaAfter(List<EventoDTO> eventos, LocalDateTime fechaInseminacion) {
         EventoDTO last = null;
         for (EventoDTO evento : eventos) {
-            if (isConfirmacion(evento) && evento.getFechaHora().isAfter(fechaInseminacion)) {
+            if (isConfirmacion(evento) && isResultadoPositivo(evento) && evento.getFechaHora().isAfter(fechaInseminacion)) {
                 last = evento;
             }
         }
         return last;
     }
 
-    private boolean hasConfirmacionAfter(List<EventoDTO> eventos, LocalDateTime fechaInseminacion) {
-        return findLastConfirmacionAfter(eventos, fechaInseminacion) != null;
+    private boolean hasConfirmacionPositivaAfter(List<EventoDTO> eventos, LocalDateTime fechaInseminacion) {
+        return findLastConfirmacionPositivaAfter(eventos, fechaInseminacion) != null;
     }
 
     private boolean isConfirmacion(EventoDTO evento) {
-        return isTipo(evento, TIPO_DIAGNOSTICO_PRENEZ) || isTipo(evento, TIPO_REVISION_VETERINARIO);
+        return isTipo(evento, CODIGO_DIAGNOSTICO_PRENEZ) || isTipo(evento, CODIGO_REVISION_VETERINARIO);
     }
 
-    private boolean hasPartoAfter(List<EventoDTO> eventos, LocalDateTime fechaInseminacion) {
+    private boolean hasCierreGestacionAfter(List<EventoDTO> eventos, LocalDateTime fechaInseminacion) {
         for (EventoDTO evento : eventos) {
-            if (isTipo(evento, TIPO_PARTO) && evento.getFechaHora().isAfter(fechaInseminacion)) {
+            if ((isTipo(evento, CODIGO_PARTO) || isTipo(evento, CODIGO_ABORTO))
+                    && evento.getFechaHora().isAfter(fechaInseminacion)) {
                 return true;
             }
         }
         return false;
     }
 
-    private boolean isTipo(EventoDTO evento, String tipo) {
-        return tipo.equalsIgnoreCase(evento.getTipoEventoNombre());
+    private boolean isTipo(EventoDTO evento, String codigo) {
+        if (evento.getTipoEventoCodigo() != null) {
+            return codigo.equalsIgnoreCase(evento.getTipoEventoCodigo());
+        }
+        return codigo.equalsIgnoreCase(evento.getTipoEventoNombre());
+    }
+
+    private boolean isResultadoPositivo(EventoDTO evento) {
+        return evento.getResultado() != null && RESULTADO_POSITIVO.equalsIgnoreCase(evento.getResultado().trim());
     }
 
     private void updateSummary() {
@@ -274,7 +301,7 @@ public class DashboardGanaderoView extends AbstractView implements FarmFilterAwa
 
     private void updateTable() {
         DefaultTableModel model = new DefaultTableModel(
-                new Object[] { "Estado", "Crotal", "Animal", "Inseminación", "Confirmación", "Fin preñez", "Días" }, 0) {
+                new Object[] { "Estado", "Crotal", "Animal", "Inseminación", "Confirmación", "Fin preñez", "Días", "DiasRestantes" }, 0) {
                     private static final long serialVersionUID = 1L;
 
                     @Override
@@ -285,11 +312,12 @@ public class DashboardGanaderoView extends AbstractView implements FarmFilterAwa
 
         if (rows.isEmpty()) {
             model.addRow(new Object[] { "Sin avisos", "", "No hay vacas que cumplan preñez en los próximos 15 días.", "",
-                    "", "", "" });
+                    "", "", "", null });
         } else {
             for (ProximoPartoRow row : rows) {
                 model.addRow(new Object[] { row.getEstado(), row.getAnimalCrotal(), row.getAnimalNombre(),
-                        row.getFechaInseminacion(), row.getFechaDiagnostico(), row.getFinPrenez(), row.getDiasTexto() });
+                        row.getFechaInseminacion(), row.getFechaDiagnostico(), row.getFinPrenez(), row.getDiasTexto(),
+                        Long.valueOf(row.getDiasRestantes()) });
             }
         }
 
@@ -301,6 +329,7 @@ public class DashboardGanaderoView extends AbstractView implements FarmFilterAwa
         table.getColumnExt(4).setPreferredWidth(120);
         table.getColumnExt(5).setPreferredWidth(120);
         table.getColumnExt(6).setPreferredWidth(90);
+        table.getColumnExt(7).setVisible(false);
     }
 
     private static class ProximoPartoRow {
@@ -355,29 +384,43 @@ public class DashboardGanaderoView extends AbstractView implements FarmFilterAwa
         }
     }
 
-    private static class StatusTableRenderer extends DefaultTableCellRenderer {
+    private class DashboardTable extends JXTable {
         private static final long serialVersionUID = 1L;
 
         @Override
-        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
-                int row, int column) {
-            Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-            if (isSelected) {
+        public Component prepareRenderer(TableCellRenderer renderer, int row, int column) {
+            Component component = super.prepareRenderer(renderer, row, column);
+            if (isRowSelected(row)) {
                 return component;
             }
 
-            String status = String.valueOf(table.getValueAt(row, 0));
-            if (status.startsWith("Miente")) {
-                component.setBackground(new Color(255, 244, 232));
-                component.setForeground(new Color(109, 50, 0));
-            } else if ("Termina hoy".equals(status)) {
-                component.setBackground(new Color(255, 250, 222));
-                component.setForeground(new Color(89, 72, 0));
-            } else {
+            Long diasRestantes = getDiasRestantes(row);
+            if (diasRestantes == null) {
                 component.setBackground(Color.WHITE);
                 component.setForeground(new Color(33, 43, 48));
+                return component;
+            }
+
+            if (diasRestantes.longValue() < 0) {
+                component.setBackground(MIENTEN_BACKGROUND);
+                component.setForeground(MIENTEN_COLOR);
+            } else if (diasRestantes.longValue() == 0) {
+                component.setBackground(HOY_BACKGROUND);
+                component.setForeground(HOY_COLOR);
+            } else {
+                component.setBackground(PROXIMAS_BACKGROUND);
+                component.setForeground(PROXIMAS_COLOR);
             }
             return component;
+        }
+
+        private Long getDiasRestantes(int row) {
+            int modelRow = convertRowIndexToModel(row);
+            if (modelRow < 0 || modelRow >= getModel().getRowCount()) {
+                return null;
+            }
+            Object value = getModel().getValueAt(modelRow, 7);
+            return value instanceof Long ? (Long) value : null;
         }
     }
 }

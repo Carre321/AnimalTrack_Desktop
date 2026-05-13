@@ -7,6 +7,9 @@ import java.util.List;
 
 import javax.swing.ImageIcon;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import com.tonin.animaltrack.dao.criteria.VeterinarioCriteria;
 import com.tonin.animaltrack.model.dto.VeterinarioDTO;
 import com.tonin.animaltrack.service.VeterinarioService;
@@ -14,6 +17,8 @@ import com.tonin.animaltrack.service.impl.VeterinarioServiceImpl;
 import com.tonin.animaltrack.views.VeterinarioSearchView;
 
 public class VeterinarioSearchController extends Controller implements KeyListener {
+
+	private static Logger logger = LogManager.getLogger(VeterinarioSearchController.class.getName());
 
 	private VeterinarioSearchView view = null;
 	private VeterinarioService service = null;
@@ -27,8 +32,13 @@ public class VeterinarioSearchController extends Controller implements KeyListen
 
 	public void doAction() {
 		VeterinarioCriteria criteria = view.getCriteria();
-		List<VeterinarioDTO> results = service.findByCriteria(criteria);
-		view.setModel(results);
+		try {
+			List<VeterinarioDTO> results = service.findByCriteria(criteria);
+			view.setModel(results);
+		} catch (Exception e) {
+			logger.error(e.getMessage(), e);
+			view.setModel(null);
+		}
 	}
 
 	@Override

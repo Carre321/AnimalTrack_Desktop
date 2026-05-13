@@ -9,6 +9,9 @@ import java.sql.Date;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
@@ -38,6 +41,8 @@ import com.tonin.animaltrack.views.controler.CancelController;
 import com.tonin.animaltrack.views.controler.Controller;
 
 public class AnimalCreateView extends AbstractView {
+
+	private static Logger logger = LogManager.getLogger(AnimalCreateView.class.getName());
 
     private static final long serialVersionUID = 1L;
 
@@ -132,9 +137,15 @@ public class AnimalCreateView extends AbstractView {
     }
 
     private void loadInitialData() {
-        setModel(granjaCombo, granjaService.findAll(), true);
-        setModel(sexoCombo, sexoService.findAll(), false);
-        setModel(razaCombo, razaService.findAll(), true);
+        try {
+            setModel(granjaCombo, granjaService.findAll(), true);
+            setModel(sexoCombo, sexoService.findAll(), false);
+            setModel(razaCombo, razaService.findAll(), true);
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            JOptionPane.showMessageDialog(this, "No se pudieron cargar los datos iniciales.", "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
         reloadBySelectedFarm();
     }
 
@@ -164,8 +175,13 @@ public class AnimalCreateView extends AbstractView {
         criteria.setGranjaId(granjaId);
         criteria.setSexoId(sexoId);
 
-        List<AnimalDTO> animales = animalService.findByCriteria(criteria);
-        return animales == null ? Collections.<AnimalDTO>emptyList() : animales;
+        try {
+            List<AnimalDTO> animales = animalService.findByCriteria(criteria);
+            return animales == null ? Collections.<AnimalDTO>emptyList() : animales;
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            return Collections.emptyList();
+        }
     }
 
     private Long findSexoId(String sexoNombre) {
@@ -197,6 +213,7 @@ public class AnimalCreateView extends AbstractView {
             reloadBySelectedFarm();
             return true;
         } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             return false;
         }
@@ -220,6 +237,7 @@ public class AnimalCreateView extends AbstractView {
                     JOptionPane.INFORMATION_MESSAGE);
             return true;
         } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             return false;
         }

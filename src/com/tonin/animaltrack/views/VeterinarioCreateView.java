@@ -8,6 +8,9 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.util.List;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -32,6 +35,8 @@ import com.tonin.animaltrack.views.controler.Controller;
 import com.tonin.animaltrack.views.controler.VeterinarioCreateController;
 
 public class VeterinarioCreateView extends AbstractView {
+
+	private static Logger logger = LogManager.getLogger(VeterinarioCreateView.class.getName());
 
     private JTextField idTF;
     private JTextField codigoTF;
@@ -110,7 +115,12 @@ public class VeterinarioCreateView extends AbstractView {
     }
 
     private void loadInitialData() {
-        setModel(provinciaCombo, provinciaService.findAll(), true);
+        try {
+            setModel(provinciaCombo, provinciaService.findAll(), true);
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            setModel(provinciaCombo, null, true);
+        }
         reloadMunicipios();
     }
 
@@ -120,7 +130,12 @@ public class VeterinarioCreateView extends AbstractView {
             setModel(municipioCombo, null, true);
             return;
         }
-        setModel(municipioCombo, municipioService.findByProvinciaId(provinciaItem.getValue().getId()), true);
+        try {
+            setModel(municipioCombo, municipioService.findByProvinciaId(provinciaItem.getValue().getId()), true);
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            setModel(municipioCombo, null, true);
+        }
     }
 
     public boolean createVeterinario() {
@@ -138,6 +153,7 @@ public class VeterinarioCreateView extends AbstractView {
             clearForm();
             return true;
         } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             return false;
         }
@@ -161,6 +177,7 @@ public class VeterinarioCreateView extends AbstractView {
                     JOptionPane.INFORMATION_MESSAGE);
             return true;
         } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
             JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
             return false;
         }

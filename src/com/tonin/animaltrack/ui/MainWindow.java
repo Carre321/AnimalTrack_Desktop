@@ -14,6 +14,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -52,6 +55,8 @@ import com.tonin.animaltrack.views.controler.OpenVeterinarioSearchController;
 
 public class MainWindow {
 
+	private static Logger logger = LogManager.getLogger(MainWindow.class.getName());
+
     private static MainWindow instance = null;
 
     private JFrame frame;
@@ -74,7 +79,7 @@ public class MainWindow {
                 	UIManager.setLookAndFeel(new FlatLightLaf());
                     new LoginWindow().showWindow();
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    logger.error(e.getMessage(), e);
                 }
             }
         });
@@ -319,26 +324,32 @@ public class MainWindow {
         if (user == null) {
             return new ArrayList<GranjaDTO>();
         }
-        if (isAdmin(user)) {
-            List<GranjaDTO> granjas = granjaService.findAll();
-            return granjas == null ? new ArrayList<GranjaDTO>() : granjas;
-        }
-        if (user.getGanaderoId() != null) {
-            List<GranjaDTO> granjas = granjaService.findByGanaderoId(user.getGanaderoId());
-            return granjas == null ? new ArrayList<GranjaDTO>() : granjas;
-        }
-        if (user.getVeterinarioId() != null) {
-            List<VeterinarioGranja> relaciones = veterinarioGranjaService.findByVeterinarioId(user.getVeterinarioId());
-            Map<Long, GranjaDTO> granjas = new LinkedHashMap<Long, GranjaDTO>();
-            if (relaciones != null) {
-                for (VeterinarioGranja relacion : relaciones) {
-                    GranjaDTO granja = granjaService.findById(relacion.getGranjaId());
-                    if (granja != null && granja.getId() != null) {
-                        granjas.put(granja.getId(), granja);
+        try {
+            if (isAdmin(user)) {
+                List<GranjaDTO> granjas = granjaService.findAll();
+                return granjas == null ? new ArrayList<GranjaDTO>() : granjas;
+            }
+            if (user.getGanaderoId() != null) {
+                List<GranjaDTO> granjas = granjaService.findByGanaderoId(user.getGanaderoId());
+                return granjas == null ? new ArrayList<GranjaDTO>() : granjas;
+            }
+            if (user.getVeterinarioId() != null) {
+                List<VeterinarioGranja> relaciones = veterinarioGranjaService.findByVeterinarioId(user.getVeterinarioId());
+                Map<Long, GranjaDTO> granjas = new LinkedHashMap<Long, GranjaDTO>();
+                if (relaciones != null) {
+                    for (VeterinarioGranja relacion : relaciones) {
+                        GranjaDTO granja = granjaService.findById(relacion.getGranjaId());
+                        if (granja != null && granja.getId() != null) {
+                            granjas.put(granja.getId(), granja);
+                        }
                     }
                 }
+                return new ArrayList<GranjaDTO>(granjas.values());
             }
-            return new ArrayList<GranjaDTO>(granjas.values());
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+            JOptionPane.showMessageDialog(frame, "No se pudieron cargar las granjas disponibles.", "AnimalTrack",
+                    JOptionPane.ERROR_MESSAGE);
         }
         return new ArrayList<GranjaDTO>();
     }
