@@ -41,7 +41,7 @@ import com.tonin.animaltrack.views.tableModel.AnimalTableModel;
 
 public class AnimalSearchView extends AbstractView implements FarmFilterAware {
     private static final long serialVersionUID = 1L;
-    private static final String NO_MATCHES_MESSAGE = "No hay coincidencias con el filtro de busqueda.";
+    private static final String NO_MATCHES_MESSAGE = "No hay coincidencias con el filtro de búsqueda.";
     private static final int PAGE_SIZE = 20;
     private static Logger logger = LogManager.getLogger(AnimalSearchView.class.getName());
 
@@ -132,7 +132,7 @@ public class AnimalSearchView extends AbstractView implements FarmFilterAware {
         contentPane.add(paginationPanel, BorderLayout.SOUTH);
         
         anteriorButton = new JButton("<<");
-        paginaLabel = new JLabel("Pagina 1 de 1");
+        paginaLabel = new JLabel("Página 1 de 1");
         siguienteButton = new JButton(">>");
         totalResultadosLabel = new JLabel("Total: 0 resultados");
 
@@ -251,7 +251,7 @@ public class AnimalSearchView extends AbstractView implements FarmFilterAware {
         siguienteButton.setVisible(mostrarPaginacion);
         anteriorButton.setEnabled(paginaActual > 1);
         siguienteButton.setEnabled(paginaActual < totalPaginas);
-        paginaLabel.setText("Pagina " + paginaActual + " de " + totalPaginas);
+        paginaLabel.setText("Página " + paginaActual + " de " + totalPaginas);
         totalResultadosLabel.setText("Total: " + total + " resultados");
     }
 
@@ -309,7 +309,7 @@ public class AnimalSearchView extends AbstractView implements FarmFilterAware {
 
     @SuppressWarnings("unchecked")
     private <T> ComboItem<T> getSelectedItem(JComboBox<ComboItem<T>> combo) {
-        Object selectedItem = combo.getSelectedItem();
+        Object selectedItem = FilterableComboBoxSupport.getSelectedItem(combo);
         if (!(selectedItem instanceof ComboItem)) {
             return null;
         }

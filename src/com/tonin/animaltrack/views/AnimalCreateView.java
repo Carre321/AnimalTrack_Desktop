@@ -1,10 +1,17 @@
 package com.tonin.animaltrack.views;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Image;
 import java.awt.Insets;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.sql.Date;
 import java.util.Collections;
 import java.util.List;
@@ -13,26 +20,38 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.swing.ComboBoxModel;
+import javax.swing.BorderFactory;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.border.EmptyBorder;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.table.DefaultTableModel;
 
 import com.tonin.animaltrack.model.Animal;
 import com.tonin.animaltrack.model.Raza;
 import com.tonin.animaltrack.model.Sexo;
 import com.tonin.animaltrack.dao.criteria.AnimalCriteria;
+import com.tonin.animaltrack.dao.criteria.EventoCriteria;
+import com.tonin.animaltrack.dao.Results;
 import com.tonin.animaltrack.model.dto.AnimalDTO;
+import com.tonin.animaltrack.model.dto.EventoDTO;
 import com.tonin.animaltrack.model.dto.GranjaDTO;
 import com.tonin.animaltrack.service.AnimalService;
+import com.tonin.animaltrack.service.EventoService;
 import com.tonin.animaltrack.service.GranjaService;
 import com.tonin.animaltrack.service.RazaService;
 import com.tonin.animaltrack.service.SexoService;
 import com.tonin.animaltrack.service.impl.AnimalServiceImpl;
+import com.tonin.animaltrack.service.impl.EventoServiceImpl;
 import com.tonin.animaltrack.service.impl.GranjaServiceImpl;
 import com.tonin.animaltrack.service.impl.RazaServiceImpl;
 import com.tonin.animaltrack.service.impl.SexoServiceImpl;
@@ -59,11 +78,17 @@ public class AnimalCreateView extends AbstractView {
     private JComboBox<ComboItem<AnimalDTO>> madreInternaCombo;
     private JComboBox<ComboItem<AnimalDTO>> padreInternoCombo;
     private AnimalService animalService;
+    private EventoService eventoService;
     private GranjaService granjaService;
     private SexoService sexoService;
     private RazaService razaService;
     private JButton agreeButton;
     private JButton reloadButton;
+    private JTable ultimosEventosTable;
+    private JLabel fotoLabel;
+    private JButton seleccionarFotoButton;
+    private JButton quitarFotoButton;
+    private byte[] fotoBytes;
     private Long currentEventPartoId;
 
     public AnimalCreateView() {
@@ -77,8 +102,18 @@ public class AnimalCreateView extends AbstractView {
         setName("Nuevo Animal");
         setLayout(new BorderLayout(0, 0));
 
+        JPanel contentPanel = new JPanel(new BorderLayout(12, 12));
+        contentPanel.setBorder(new EmptyBorder(14, 10, 10, 10));
+        add(contentPanel, BorderLayout.CENTER);
+
+        JPanel topPanel = new JPanel(new BorderLayout(18, 0));
+        contentPanel.add(topPanel, BorderLayout.NORTH);
+
+        JPanel photoPanel = createPhotoPanel();
+        topPanel.add(photoPanel, BorderLayout.WEST);
+
         JPanel formPanel = new JPanel(new GridBagLayout());
-        add(formPanel, BorderLayout.CENTER);
+        topPanel.add(formPanel, BorderLayout.CENTER);
 
         int row = 0;
 
@@ -113,6 +148,15 @@ public class AnimalCreateView extends AbstractView {
         addField(formPanel, row++, "Madre externa:", madreExternaTF);
         addField(formPanel, row++, "Padre interno:", padreInternoCombo);
 
+        JPanel eventosPanel = new JPanel(new BorderLayout(0, 6));
+        eventosPanel.setBorder(BorderFactory.createTitledBorder("Ultimos 5 eventos"));
+        ultimosEventosTable = new JTable();
+        ultimosEventosTable.setFillsViewportHeight(true);
+        ultimosEventosTable.setRowHeight(24);
+        ultimosEventosTable.setModel(createEventosTableModel(Collections.<EventoDTO>emptyList()));
+        eventosPanel.add(new JScrollPane(ultimosEventosTable), BorderLayout.CENTER);
+        contentPanel.add(eventosPanel, BorderLayout.CENTER);
+
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 6));
         agreeButton = new JButton("Guardar");
         agreeButton.setIcon(new ImageIcon(AnimalCreateView.class.getResource("/animaltrack/icons/32/save.png")));
@@ -129,8 +173,38 @@ public class AnimalCreateView extends AbstractView {
         granjaCombo.addActionListener(e -> reloadBySelectedFarm());
     }
 
+    private JPanel createPhotoPanel() {
+        JPanel container = new JPanel(new BorderLayout(0, 6));
+        JPanel photoPanel = new JPanel(new GridBagLayout());
+        photoPanel.setPreferredSize(new Dimension(460, 260));
+        photoPanel.setMinimumSize(new Dimension(320, 220));
+        photoPanel.setBorder(BorderFactory.createLineBorder(new Color(190, 190, 190)));
+        photoPanel.setBackground(new Color(245, 245, 245));
+
+        fotoLabel = new JLabel("Foto del animal");
+        fotoLabel.setForeground(new Color(100, 100, 100));
+        fotoLabel.setFont(fotoLabel.getFont().deriveFont(Font.BOLD, 18f));
+        photoPanel.add(fotoLabel);
+
+        JPanel photoButtonsPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 0));
+        seleccionarFotoButton = new JButton("Subir foto");
+        seleccionarFotoButton.addActionListener(e -> seleccionarFoto());
+        quitarFotoButton = new JButton("Quitar foto");
+        quitarFotoButton.addActionListener(e -> {
+            fotoBytes = null;
+            updateFotoPreview();
+        });
+        photoButtonsPanel.add(seleccionarFotoButton);
+        photoButtonsPanel.add(quitarFotoButton);
+
+        container.add(photoPanel, BorderLayout.CENTER);
+        container.add(photoButtonsPanel, BorderLayout.SOUTH);
+        return container;
+    }
+
     private void initServices() {
         animalService = new AnimalServiceImpl();
+        eventoService = new EventoServiceImpl();
         granjaService = new GranjaServiceImpl();
         sexoService = new SexoServiceImpl();
         razaService = new RazaServiceImpl();
@@ -203,7 +277,7 @@ public class AnimalCreateView extends AbstractView {
             if (created == null || created.getId() == null) {
                 JOptionPane.showMessageDialog(this,
                         "Faltan datos obligatorios. Revisa los datos introducidos.",
-                        "Validacion", JOptionPane.WARNING_MESSAGE);
+                        "Validación", JOptionPane.WARNING_MESSAGE);
                 return false;
             }
 
@@ -223,7 +297,7 @@ public class AnimalCreateView extends AbstractView {
         try {
             Animal animal = buildAnimal();
             if (animal.getId() == null) {
-                JOptionPane.showMessageDialog(this, "No hay ningun animal cargado para actualizar.", "Validacion",
+                JOptionPane.showMessageDialog(this, "No hay ningún animal cargado para actualizar.", "Validación",
                         JOptionPane.WARNING_MESSAGE);
                 return false;
             }
@@ -248,6 +322,11 @@ public class AnimalCreateView extends AbstractView {
     }
 
     public void setEditable(boolean editable) {
+        if (editable && parseLong(idTF.getText()) != null) {
+            showFechaBaja(true);
+        } else if (!editable) {
+            showFechaBaja(trimToNull(fechaBajaTF.getText()) != null);
+        }
         nombreTF.setEditable(editable);
         crotalTF.setEditable(editable);
         fechaNacimientoTF.setEditable(editable);
@@ -258,6 +337,8 @@ public class AnimalCreateView extends AbstractView {
         razaCombo.setEnabled(editable);
         madreInternaCombo.setEnabled(editable);
         padreInternoCombo.setEnabled(editable);
+        seleccionarFotoButton.setEnabled(editable);
+        quitarFotoButton.setEnabled(editable && fotoBytes != null);
         configureSecondaryButton(editable);
     }
 
@@ -270,20 +351,23 @@ public class AnimalCreateView extends AbstractView {
         }
 
         setName("Detalle Animal");
-        showFechaBaja(true);
+        showFechaBaja(animal.getFechaBaja() != null);
         idTF.setText(animal.getId() == null ? "" : String.valueOf(animal.getId()));
         nombreTF.setText(defaultString(animal.getNombre()));
         crotalTF.setText(defaultString(animal.getCrotal()));
         fechaNacimientoTF.setText(animal.getFechaNacimiento() == null ? "" : animal.getFechaNacimiento().toString());
         fechaBajaTF.setText(animal.getFechaBaja() == null ? "" : animal.getFechaBaja().toString());
         madreExternaTF.setText(defaultString(animal.getMadreExternaCrotal()));
+        fotoBytes = animal.getFoto();
+        updateFotoPreview();
 
         selectComboItem(granjaCombo, animal.getGranjaId());
         selectComboItem(sexoCombo, animal.getSexoId());
         selectComboItem(razaCombo, animal.getRazaId());
         reloadBySelectedFarm();
         selectComboItem(madreInternaCombo, animal.getMadreInternaId());
-        selectComboItem(padreInternoCombo, animal.getPadreInternoId()); 
+        selectComboItem(padreInternoCombo, animal.getPadreInternoId());
+        loadUltimosEventos(animal.getId());
     }
 
     private Animal buildAnimal() {
@@ -311,11 +395,13 @@ public class AnimalCreateView extends AbstractView {
         animal.setMadreExternaCrotal(madreExterna);
         animal.setPadreInternoId(padreItem == null || padreItem.getValue() == null ? null : padreItem.getValue().getId());
         animal.setEventPartoId(currentEventPartoId);
+        animal.setFoto(fotoBytes);
         return animal;
     }
 
     private void clearForm() {
         currentEventPartoId = null;
+        fotoBytes = null;
         setName("Nuevo Animal");
         idTF.setText("");
         nombreTF.setText("");
@@ -328,8 +414,89 @@ public class AnimalCreateView extends AbstractView {
         clearComboSelection(sexoCombo);
         clearComboSelection(madreInternaCombo);
         clearComboSelection(padreInternoCombo);
+        updateFotoPreview();
+        ultimosEventosTable.setModel(createEventosTableModel(Collections.<EventoDTO>emptyList()));
         configureSecondaryButton(true);
         showFechaBaja(false);
+    }
+
+    private void seleccionarFoto() {
+        JFileChooser chooser = new JFileChooser();
+        chooser.setFileFilter(new FileNameExtensionFilter("Imagenes", "jpg", "jpeg", "png", "gif"));
+        if (chooser.showOpenDialog(this) != JFileChooser.APPROVE_OPTION) {
+            return;
+        }
+
+        File selectedFile = chooser.getSelectedFile();
+        try {
+            fotoBytes = Files.readAllBytes(selectedFile.toPath());
+            updateFotoPreview();
+        } catch (IOException ex) {
+            logger.error(ex.getMessage(), ex);
+            JOptionPane.showMessageDialog(this, "No se pudo cargar la imagen seleccionada.", "Error",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void updateFotoPreview() {
+        if (fotoBytes == null || fotoBytes.length == 0) {
+            fotoLabel.setIcon(null);
+            fotoLabel.setText("Foto del animal");
+            fotoLabel.setHorizontalAlignment(JLabel.CENTER);
+            quitarFotoButton.setEnabled(false);
+            return;
+        }
+
+        ImageIcon imageIcon = new ImageIcon(fotoBytes);
+        Image scaledImage = imageIcon.getImage().getScaledInstance(440, 250, Image.SCALE_SMOOTH);
+        fotoLabel.setText("");
+        fotoLabel.setIcon(new ImageIcon(scaledImage));
+        fotoLabel.setHorizontalAlignment(JLabel.CENTER);
+        quitarFotoButton.setEnabled(seleccionarFotoButton.isEnabled());
+    }
+
+    private void loadUltimosEventos(Long animalId) {
+        if (animalId == null) {
+            ultimosEventosTable.setModel(createEventosTableModel(Collections.<EventoDTO>emptyList()));
+            return;
+        }
+
+        try {
+            EventoCriteria criteria = new EventoCriteria();
+            criteria.setAnimalId(animalId);
+            Results<EventoDTO> results = eventoService.findByCriteria(criteria, 1, 5);
+            List<EventoDTO> eventos = results == null ? Collections.<EventoDTO>emptyList() : results.getPageResults();
+            ultimosEventosTable.setModel(createEventosTableModel(eventos));
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            ultimosEventosTable.setModel(createEventosTableModel(Collections.<EventoDTO>emptyList()));
+        }
+    }
+
+    private DefaultTableModel createEventosTableModel(List<EventoDTO> eventos) {
+        DefaultTableModel tableModel = new DefaultTableModel(new Object[] {
+                "Fecha", "Tipo", "Veterinario", "Resultado", "Observaciones"
+        }, 0) {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        if (eventos != null) {
+            for (EventoDTO evento : eventos) {
+                tableModel.addRow(new Object[] {
+                        evento.getFechaHora() == null ? "" : evento.getFechaHora().toString(),
+                        defaultString(evento.getTipoEventoNombre()),
+                        defaultString(evento.getVeterinarioNombreCompleto()),
+                        defaultString(evento.getResultado()),
+                        defaultString(evento.getObservaciones())
+                });
+            }
+        }
+        return tableModel;
     }
 
     private void configureSecondaryButton(boolean editable) {
@@ -412,25 +579,9 @@ public class AnimalCreateView extends AbstractView {
 
     @SuppressWarnings("unchecked")
     private <T> ComboItem<T> getSelectedItem(JComboBox<ComboItem<T>> combo) {
-        Object selectedItem = combo.getSelectedItem();
-        Object editorItem = combo.getEditor() == null ? null : combo.getEditor().getItem();
-        String editorText = trimToNull(editorItem == null ? null : editorItem.toString());
+        Object selectedItem = FilterableComboBoxSupport.getSelectedItem(combo);
         if (selectedItem instanceof ComboItem) {
-            ComboItem<T> item = (ComboItem<T>) selectedItem;
-            if (editorText == null || editorText.equals(item.toString())) {
-                return item;
-            }
-        }
-        if (editorText == null) {
-            return null;
-        }
-        ComboBoxModel<ComboItem<T>> model = combo.getModel();
-        for (int i = 0; i < model.getSize(); i++) {
-            ComboItem<T> item = model.getElementAt(i);
-            if (item != null && editorText.equals(item.toString())) {
-                combo.setSelectedIndex(i);
-                return item;
-            }
+            return (ComboItem<T>) selectedItem;
         }
         return null;
     }

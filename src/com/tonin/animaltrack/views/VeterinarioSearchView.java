@@ -33,7 +33,7 @@ import com.tonin.animaltrack.views.controler.VeterinarioSearchController;
 public class VeterinarioSearchView extends AbstractView implements FarmFilterAware {
     private static Logger logger = LogManager.getLogger(VeterinarioSearchView.class.getName());
 
-    private static final String NO_MATCHES_MESSAGE = "No hay coincidencias con el filtro de busqueda.";
+    private static final String NO_MATCHES_MESSAGE = "No hay coincidencias con el filtro de búsqueda.";
 
     private JTextField codigoTF;
     private JTextField nombreTF;
@@ -66,10 +66,10 @@ public class VeterinarioSearchView extends AbstractView implements FarmFilterAwa
         add(buscarPanel, BorderLayout.NORTH);
         buscarPanel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 5));
 
-        JLabel codigoJlabel = new JLabel("Codigo:");
+        JLabel codigoJlabel = new JLabel("Código:");
         buscarPanel.add(codigoJlabel);
 
-        codigoTF = new JXSearchField("Codigo");
+        codigoTF = new JXSearchField("Código");
         codigoTF.setColumns(10);
         buscarPanel.add(codigoTF);
 
@@ -164,7 +164,7 @@ public class VeterinarioSearchView extends AbstractView implements FarmFilterAwa
 
     public void updateView() {
         DefaultTableModel model = new DefaultTableModel(
-                new Object[] { "Codigo", "DNI", "Nombre", "Apellidos", "Telefono", "Email", "Municipio", "Provincia" },
+                new Object[] { "Código", "DNI", "Nombre", "Apellidos", "Teléfono", "Email", "Municipio", "Provincia" },
                 0) {
             private static final long serialVersionUID = 1L;
 

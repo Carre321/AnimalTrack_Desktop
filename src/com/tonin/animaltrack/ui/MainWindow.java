@@ -50,7 +50,7 @@ import com.tonin.animaltrack.views.controler.OpenVeterinarioSearchController;
 
 
 /*
- * VEntana princial del sistema, desde la cual se accede a las diferentes funcionalidades. Contiene un menu lateral para navegar entre vistas, un combo para filtrar por granja y un boton para mostrar informacion del usuario logueado.
+ * Ventana principal del sistema, desde la cual se accede a las diferentes funcionalidades. Contiene un menú lateral para navegar entre vistas, un combo para filtrar por granja y un botón para mostrar información del usuario logueado.
  */
 
 public class MainWindow {
@@ -160,7 +160,7 @@ public class MainWindow {
         gbc_veterinarioButton.gridy = 2;
         mainMenuPanel.add(veterinarioButton, gbc_veterinarioButton);
 
-        adminButton = new JButton("Administracion");
+        adminButton = new JButton("Administración");
         adminButton.setIcon(new ImageIcon(MainWindow.class.getResource("/animaltrack/icons/32/admin.png")));
         GridBagConstraints gbc_adminButton = new GridBagConstraints();
         gbc_adminButton.fill = GridBagConstraints.HORIZONTAL;
@@ -210,7 +210,7 @@ public class MainWindow {
         usuarioButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 if (currentUser == null) {
-                    JOptionPane.showMessageDialog(frame, "No hay sesion iniciada.", "Usuario",
+                    JOptionPane.showMessageDialog(frame, "No hay sesión iniciada.", "Usuario",
                             JOptionPane.INFORMATION_MESSAGE);
                     return;
                 }
@@ -255,7 +255,7 @@ public class MainWindow {
         }
         if (user == null) {
             usuarioButton.setText("");
-            usuarioButton.setToolTipText("Sin sesion");
+            usuarioButton.setToolTipText("Sin sesión");
             selectedGranjaId = null;
             loadFarmCombo(new ArrayList<GranjaDTO>());
             return;
@@ -285,7 +285,7 @@ public class MainWindow {
         addProfileRow(profilePanel, gbc, 1, "Rol:", currentUser.getRol());
         addProfileRow(profilePanel, gbc, 2, "Email:", currentUser.getEmail());
 
-        Object[] options = { "Cerrar sesion", "Cerrar" };
+        Object[] options = { "Cerrar sesión", "Cerrar" };
         int option = JOptionPane.showOptionDialog(frame, profilePanel, "Perfil", JOptionPane.YES_NO_OPTION,
                 JOptionPane.INFORMATION_MESSAGE,
                 new ImageIcon(MainWindow.class.getResource("/animaltrack/logo-64.png")), options, options[1]);
@@ -304,7 +304,7 @@ public class MainWindow {
     }
 
     public void logout() {
-        int option = JOptionPane.showConfirmDialog(frame, "Cerrar la sesion actual?", "Cerrar sesion",
+        int option = JOptionPane.showConfirmDialog(frame, "¿Cerrar la sesión actual?", "Cerrar sesión",
                 JOptionPane.YES_NO_OPTION);
         if (option != JOptionPane.YES_OPTION) {
             return;
@@ -373,9 +373,10 @@ public class MainWindow {
     }
 
     private ComboItem<GranjaDTO> getSelectedGranjaItem() {
+        Object selected = FilterableComboBoxSupport.getSelectedItem(granjaComboBox);
         @SuppressWarnings("unchecked")
-        ComboItem<GranjaDTO> selectedItem = granjaComboBox.getSelectedItem() instanceof ComboItem
-                ? (ComboItem<GranjaDTO>) granjaComboBox.getSelectedItem()
+        ComboItem<GranjaDTO> selectedItem = selected instanceof ComboItem
+                ? (ComboItem<GranjaDTO>) selected
                 : null;
         return selectedItem;
     }

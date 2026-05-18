@@ -80,6 +80,36 @@ public final class FilterableComboBoxSupport {
         });
     }
 
+    public static Object getSelectedItem(JComboBox<?> combo) {
+        if (combo == null) {
+            return null;
+        }
+        Object selectedItem = combo.getSelectedItem();
+        if (!combo.isEditable()) {
+            return selectedItem;
+        }
+
+        Object editorItem = combo.getEditor() == null ? null : combo.getEditor().getItem();
+        String editorText = trimToNull(editorItem == null ? null : editorItem.toString());
+        if (editorText == null) {
+            return null;
+        }
+
+        if (selectedItem != null && editorText.equals(selectedItem.toString())) {
+            return selectedItem;
+        }
+
+        ComboBoxModel<?> model = combo.getModel();
+        for (int i = 0; i < model.getSize(); i++) {
+            Object item = model.getElementAt(i);
+            if (item != null && editorText.equals(item.toString())) {
+                combo.setSelectedIndex(i);
+                return item;
+            }
+        }
+        return null;
+    }
+
     private static <T> void loadItems(JComboBox<T> combo, List<T> allItems) {
         allItems.clear();
         ComboBoxModel<T> model = combo.getModel();
@@ -202,6 +232,14 @@ public final class FilterableComboBoxSupport {
         }
         String normalized = Normalizer.normalize(value.trim().toLowerCase(), Normalizer.Form.NFD);
         return normalized.replaceAll("\\p{M}", "");
+    }
+
+    private static String trimToNull(String value) {
+        if (value == null) {
+            return null;
+        }
+        String trimmed = value.trim();
+        return trimmed.isEmpty() ? null : trimmed;
     }
 
     private static boolean hasNullValue(Object item) {

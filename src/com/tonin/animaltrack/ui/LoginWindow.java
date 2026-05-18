@@ -142,7 +142,7 @@ public class LoginWindow {
             user = authService.login(email, password);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
-            JOptionPane.showMessageDialog(frame, "No se pudo iniciar sesion.", "Login", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(frame, "No se pudo iniciar sesión.", "Login", JOptionPane.ERROR_MESSAGE);
             return;
         }
         if (user == null) {

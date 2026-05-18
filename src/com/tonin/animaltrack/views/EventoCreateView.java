@@ -181,7 +181,7 @@ public class EventoCreateView extends AbstractView {
             EventoDTO created = eventoService.create(evento);
             if (created == null || created.getId() == null) {
                 JOptionPane.showMessageDialog(this, "Faltan datos obligatorios. Revisa los datos introducidos.",
-                        "Validacion", JOptionPane.WARNING_MESSAGE);
+                        "Validación", JOptionPane.WARNING_MESSAGE);
                 return false;
             }
 
@@ -200,7 +200,7 @@ public class EventoCreateView extends AbstractView {
         try {
             Evento evento = buildEvento();
             if (evento.getId() == null) {
-                JOptionPane.showMessageDialog(this, "No hay ningun evento cargado para actualizar.", "Validacion",
+                JOptionPane.showMessageDialog(this, "No hay ningún evento cargado para actualizar.", "Validación",
                         JOptionPane.WARNING_MESSAGE);
                 return false;
             }
@@ -473,7 +473,7 @@ public class EventoCreateView extends AbstractView {
 
     @SuppressWarnings("unchecked")
     private <T> ComboItem<T> getSelectedItem(JComboBox<ComboItem<T>> combo) {
-        Object selectedItem = combo.getSelectedItem();
+        Object selectedItem = FilterableComboBoxSupport.getSelectedItem(combo);
         if (!(selectedItem instanceof ComboItem)) {
             return null;
         }

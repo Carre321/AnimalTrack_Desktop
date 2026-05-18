@@ -84,11 +84,11 @@ public class VeterinarioCreateView extends AbstractView {
         FilterableComboBoxSupport.decorate(provinciaCombo);
         FilterableComboBoxSupport.decorate(municipioCombo);
 
-        addField(formPanel, row++, "Codigo:", codigoTF);
+        addField(formPanel, row++, "Código:", codigoTF);
         addField(formPanel, row++, "DNI:", dniTF);
         addField(formPanel, row++, "Nombre:", nombreTF);
         addField(formPanel, row++, "Apellidos:", apellidosTF);
-        addField(formPanel, row++, "Telefono:", telefonoTF);
+        addField(formPanel, row++, "Teléfono:", telefonoTF);
         addField(formPanel, row++, "Email:", emailTF);
         addField(formPanel, row++, "Provincia:", provinciaCombo);
         addField(formPanel, row++, "Municipio:", municipioCombo);
@@ -144,7 +144,7 @@ public class VeterinarioCreateView extends AbstractView {
             VeterinarioDTO created = veterinarioService.create(veterinario);
             if (created == null || created.getId() == null) {
                 JOptionPane.showMessageDialog(this, "No se pudo guardar el veterinario. Revisa los datos introducidos.",
-                        "Validacion", JOptionPane.WARNING_MESSAGE);
+                        "Validación", JOptionPane.WARNING_MESSAGE);
                 return false;
             }
 
@@ -163,7 +163,7 @@ public class VeterinarioCreateView extends AbstractView {
         try {
             Veterinario veterinario = buildVeterinario();
             if (veterinario.getId() == null) {
-                JOptionPane.showMessageDialog(this, "No hay ningun veterinario cargado para actualizar.", "Validacion",
+                JOptionPane.showMessageDialog(this, "No hay ningún veterinario cargado para actualizar.", "Validación",
                         JOptionPane.WARNING_MESSAGE);
                 return false;
             }
@@ -330,7 +330,7 @@ public class VeterinarioCreateView extends AbstractView {
 
     @SuppressWarnings("unchecked")
     private <T> ComboItem<T> getSelectedItem(JComboBox<ComboItem<T>> combo) {
-        Object selectedItem = combo.getSelectedItem();
+        Object selectedItem = FilterableComboBoxSupport.getSelectedItem(combo);
         if (!(selectedItem instanceof ComboItem)) {
             return null;
         }

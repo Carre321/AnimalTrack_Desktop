@@ -83,10 +83,10 @@ public class AdminContainerView extends AbstractView {
 	private static Logger logger = LogManager.getLogger(AdminContainerView.class.getName());
 
     private static final long serialVersionUID = 1L;
-    private static final String NO_MATCHES_MESSAGE = "No hay coincidencias con el filtro de busqueda.";
+    private static final String NO_MATCHES_MESSAGE = "No hay coincidencias con el filtro de búsqueda.";
 
     public AdminContainerView() {
-        setName("Administracion");
+        setName("Administración");
         setLayout(new BorderLayout(0, 0));
 
         JTabbedPane tabs = new JTabbedPane(JTabbedPane.TOP);
@@ -95,11 +95,11 @@ public class AdminContainerView extends AbstractView {
         tabs.addTab("Ganaderos", new CrudPanel<Ganadero>(
                 "Ganaderos", new GanaderoServiceImpl(), Ganadero.class,
                 fields("id", "dni", "nombre", "apellidos", "telefono", "email", "municipioId"),
-                labels("ID", "DNI", "Nombre", "Apellidos", "Telefono", "Email", "Municipio")));
+                labels("ID", "DNI", "Nombre", "Apellidos", "Teléfono", "Email", "Municipio")));
         tabs.addTab("Veterinarios", new CrudPanel<Veterinario>(
                 "Veterinarios", new VeterinarioServiceImpl(), Veterinario.class,
                 fields("id", "codigo", "dni", "nombre", "apellidos", "telefono", "email", "municipioId"),
-                labels("ID", "Codigo", "DNI", "Nombre", "Apellidos", "Telefono", "Email", "Municipio")));
+                labels("ID", "Código", "DNI", "Nombre", "Apellidos", "Teléfono", "Email", "Municipio")));
         tabs.addTab("Granjas", new CrudPanel<Granja>(
                 "Granjas", new GranjaServiceImpl(), Granja.class,
                 fields("id", "nombre", "direccion", "municipioId", "ganaderoId"),
@@ -107,7 +107,7 @@ public class AdminContainerView extends AbstractView {
         tabs.addTab("Semillas", new CrudPanel<Semilla>(
                 "Semillas", new SemillaServiceImpl(), Semilla.class,
                 fields("id", "codigo", "descripcion"),
-                labels("ID", "Codigo", "Descripcion")));
+                labels("ID", "Código", "Descripción")));
         tabs.addTab("Tratamientos", new CrudPanel<Tratamiento>(
                 "Tratamientos", new TratamientoServiceImpl(), Tratamiento.class,
                 fields("id", "nombre"),
@@ -119,7 +119,7 @@ public class AdminContainerView extends AbstractView {
         tabs.addTab("Notificaciones", new CrudPanel<Notificacion>(
                 "Notificaciones", new NotificacionServiceImpl(), Notificacion.class,
                 fields("id", "eventoId", "tipo", "fechaEmision", "descripcion", "tipoNotificacionId"),
-                labels("ID", "Evento", "Tipo", "Fecha emision", "Descripcion", "Tipo notif.")));
+                labels("ID", "Evento", "Tipo", "Fecha emisión", "Descripción", "Tipo notif.")));
         tabs.addTab("Usuarios", new CrudPanel<UsuarioLoginDTO>(
                 "Usuarios", new UsuarioLoginServiceImpl(), UsuarioLoginDTO.class,
                 fields("id", "email", "passwordHash", "rol", "ganaderoId", "veterinarioId", "activo"),
@@ -289,9 +289,10 @@ public class AdminContainerView extends AbstractView {
                         JOptionPane.INFORMATION_MESSAGE);
                 return;
             }
-            int option = JOptionPane.showConfirmDialog(this, "Borrar registro " + id + "?", "Confirmar",
-                    JOptionPane.YES_NO_OPTION);
-            if (option != JOptionPane.YES_OPTION) {
+
+            Object selected = findRowById(id);
+            String confirmationText = deleteConfirmationText(selected, id);
+            if (!confirmDelete(this, confirmationText)) {
                 return;
             }
             try {
@@ -301,6 +302,36 @@ public class AdminContainerView extends AbstractView {
             } catch (Exception ex) {
                 showError(ex);
             }
+        }
+
+        private Object findRowById(Long id) {
+            for (Object row : rows) {
+                Object rowId = get(row, "id");
+                if (id.equals(rowId)) {
+                    return row;
+                }
+            }
+            return null;
+        }
+
+        private String deleteConfirmationText(Object selected, Long id) {
+            if (selected != null) {
+                String crotal = stringValue(invoke(selected, "getCrotal"));
+                if (crotal != null) {
+                    return crotal;
+                }
+                if (isEvento(selected)) {
+                    return "ELIMINAR";
+                }
+                String description = describe(selected);
+                if (description != null && !description.trim().isEmpty()) {
+                    return description;
+                }
+            }
+            if (entityClass.getSimpleName().toLowerCase().contains("evento")) {
+                return "ELIMINAR";
+            }
+            return String.valueOf(id);
         }
 
         private void loadSelectedIntoForm() {
@@ -399,7 +430,7 @@ public class AdminContainerView extends AbstractView {
                 return ((JTextField) input).getText();
             }
             if (input instanceof JComboBox) {
-                Object selected = ((JComboBox<?>) input).getSelectedItem();
+                Object selected = FilterableComboBoxSupport.getSelectedItem((JComboBox<?>) input);
                 return selected instanceof LookupItem ? ((LookupItem) selected).getValue() : null;
             }
             return null;
@@ -525,6 +556,9 @@ public class AdminContainerView extends AbstractView {
             try {
                 Long first = selectedId(firstCB);
                 Long second = selectedId(secondCB);
+                if (first == null || second == null || !confirmDelete(this, "ELIMINAR")) {
+                    return;
+                }
                 if (veterinarioGranja) {
                     ((VeterinarioGranjaService) service).delete(first, second);
                 } else {
@@ -580,7 +614,7 @@ public class AdminContainerView extends AbstractView {
                     new ComboItem("Razas", new RazaServiceImpl()),
                     new ComboItem("Sexos", new SexoServiceImpl()),
                     new ComboItem("Tipos evento", new TipoEventoServiceImpl()),
-                    new ComboItem("Tipos notificacion", new TipoNotificacionServiceImpl()),
+                    new ComboItem("Tipos notificación", new TipoNotificacionServiceImpl()),
                     new ComboItem("Provincias", new ProvinciaServiceImpl()),
                     new ComboItem("Municipios", new MunicipioServiceImpl())
             }));
@@ -593,7 +627,7 @@ public class AdminContainerView extends AbstractView {
             add(new JScrollPane(table), BorderLayout.CENTER);
 
             Runnable reload = () -> {
-                ComboItem item = (ComboItem) selector.getSelectedItem();
+                ComboItem item = (ComboItem) FilterableComboBoxSupport.getSelectedItem(selector);
                 if (item == null) {
                     return;
                 }
@@ -728,7 +762,7 @@ public class AdminContainerView extends AbstractView {
     }
 
     private static Long selectedId(JComboBox<LookupItem> combo) {
-        Object selected = combo.getSelectedItem();
+        Object selected = FilterableComboBoxSupport.getSelectedItem(combo);
         return selected instanceof LookupItem ? ((LookupItem) selected).getId() : null;
     }
 
@@ -765,6 +799,20 @@ public class AdminContainerView extends AbstractView {
         }
         Object id = invoke(row, "getId");
         return id == null ? "" : String.valueOf(id);
+    }
+
+    private static boolean isEvento(Object row) {
+        return row != null && row.getClass().getSimpleName().toLowerCase().contains("evento");
+    }
+
+    private static boolean confirmDelete(Component parent, String expectedText) {
+        String expected = trimToNull(expectedText);
+        if (expected == null) {
+            expected = "ELIMINAR";
+        }
+        String typed = JOptionPane.showInputDialog(parent, "Para borrar escribe \"" + expected + "\":", "Confirmar borrado",
+                JOptionPane.WARNING_MESSAGE);
+        return expected.equals(typed);
     }
 
     private static String stringValue(Object value) {
@@ -852,7 +900,7 @@ public class AdminContainerView extends AbstractView {
 
     private static void showError(Exception ex) {
         logger.error(rootMessage(ex), ex);
-        JOptionPane.showMessageDialog(null, rootMessage(ex), "Administracion", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(null, rootMessage(ex), "Administración", JOptionPane.ERROR_MESSAGE);
     }
 
     private static String rootMessage(Throwable ex) {

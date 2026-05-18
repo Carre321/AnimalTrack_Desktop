@@ -13,7 +13,7 @@ public class OpenAdminController extends AbstractAction {
     private static final long serialVersionUID = 1L;
 
     public OpenAdminController() {
-        super("Administracion",
+        super("Administración",
                 new ImageIcon(OpenAdminController.class.getResource("/animaltrack/icons/32/admin.png")));
     }
 
