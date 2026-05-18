@@ -164,7 +164,7 @@ public class VeterinarioSearchView extends AbstractView implements FarmFilterAwa
 
     public void updateView() {
         DefaultTableModel model = new DefaultTableModel(
-                new Object[] { "Código", "DNI", "Nombre", "Apellidos", "Teléfono", "Email", "Municipio", "Provincia" },
+                new Object[] { "Código", "DNI", "Nombre", "Apellidos", "Teléfono", "Email", "Dirección", "CP", "Municipio", "Provincia" },
                 0) {
             private static final long serialVersionUID = 1L;
 
@@ -175,7 +175,7 @@ public class VeterinarioSearchView extends AbstractView implements FarmFilterAwa
         };
 
         if (this.model.isEmpty()) {
-            model.addRow(new Object[] { NO_MATCHES_MESSAGE, null, null, null, null, null, null, null });
+            model.addRow(new Object[] { NO_MATCHES_MESSAGE, null, null, null, null, null, null, null, null, null });
         } else {
             for (VeterinarioDTO dto : this.model) {
                 model.addRow(new Object[] {
@@ -185,6 +185,8 @@ public class VeterinarioSearchView extends AbstractView implements FarmFilterAwa
                         dto.getApellidos(),
                         dto.getTelefono(),
                         dto.getEmail(),
+                        dto.getDireccion(),
+                        dto.getCodigoPostal(),
                         dto.getMunicipioNombre(),
                         dto.getProvinciaNombre() });
             }

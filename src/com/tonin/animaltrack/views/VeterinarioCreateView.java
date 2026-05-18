@@ -45,6 +45,8 @@ public class VeterinarioCreateView extends AbstractView {
     private JTextField apellidosTF;
     private JTextField telefonoTF;
     private JTextField emailTF;
+    private JTextField direccionTF;
+    private JTextField codigoPostalTF;
     private JComboBox<ComboItem<Provincia>> provinciaCombo;
     private JComboBox<ComboItem<Municipio>> municipioCombo;
 
@@ -79,6 +81,8 @@ public class VeterinarioCreateView extends AbstractView {
         apellidosTF = new JTextField(20);
         telefonoTF = new JTextField(20);
         emailTF = new JTextField(20);
+        direccionTF = new JTextField(20);
+        codigoPostalTF = new JTextField(20);
         provinciaCombo = new JComboBox<ComboItem<Provincia>>();
         municipioCombo = new JComboBox<ComboItem<Municipio>>();
         FilterableComboBoxSupport.decorate(provinciaCombo);
@@ -90,6 +94,8 @@ public class VeterinarioCreateView extends AbstractView {
         addField(formPanel, row++, "Apellidos:", apellidosTF);
         addField(formPanel, row++, "Teléfono:", telefonoTF);
         addField(formPanel, row++, "Email:", emailTF);
+        addField(formPanel, row++, "Dirección:", direccionTF);
+        addField(formPanel, row++, "CP:", codigoPostalTF);
         addField(formPanel, row++, "Provincia:", provinciaCombo);
         addField(formPanel, row++, "Municipio:", municipioCombo);
 
@@ -194,6 +200,8 @@ public class VeterinarioCreateView extends AbstractView {
         apellidosTF.setEditable(editable);
         telefonoTF.setEditable(editable);
         emailTF.setEditable(editable);
+        direccionTF.setEditable(editable);
+        codigoPostalTF.setEditable(editable);
         provinciaCombo.setEnabled(editable);
         municipioCombo.setEnabled(editable);
         configureSecondaryButton(editable);
@@ -213,6 +221,8 @@ public class VeterinarioCreateView extends AbstractView {
         apellidosTF.setText(defaultString(veterinario.getApellidos()));
         telefonoTF.setText(defaultString(veterinario.getTelefono()));
         emailTF.setText(defaultString(veterinario.getEmail()));
+        direccionTF.setText(defaultString(veterinario.getDireccion()));
+        codigoPostalTF.setText(defaultString(veterinario.getCodigoPostal()));
         selectComboItem(provinciaCombo, veterinario.getProvinciaId());
         reloadMunicipios();
         selectComboItem(municipioCombo, veterinario.getMunicipioId());
@@ -229,6 +239,8 @@ public class VeterinarioCreateView extends AbstractView {
         veterinario.setApellidos(trimToNull(apellidosTF.getText()));
         veterinario.setTelefono(trimToNull(telefonoTF.getText()));
         veterinario.setEmail(trimToNull(emailTF.getText()));
+        veterinario.setDireccion(trimToNull(direccionTF.getText()));
+        veterinario.setCodigoPostal(trimToNull(codigoPostalTF.getText()));
         veterinario.setMunicipioId(municipioItem == null || municipioItem.getValue() == null ? null : municipioItem.getValue().getId());
         return veterinario;
     }
@@ -242,6 +254,8 @@ public class VeterinarioCreateView extends AbstractView {
         apellidosTF.setText("");
         telefonoTF.setText("");
         emailTF.setText("");
+        direccionTF.setText("");
+        codigoPostalTF.setText("");
         clearComboSelection(provinciaCombo);
         reloadMunicipios();
         configureSecondaryButton(true);

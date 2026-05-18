@@ -99,16 +99,16 @@ public class AdminContainerView extends AbstractView {
 
         tabs.addTab("Ganaderos", new CrudPanel<Ganadero>(
                 "Ganaderos", new GanaderoServiceImpl(), Ganadero.class,
-                fields("id", "dni", "nombre", "apellidos", "telefono", "email", "municipioId"),
-                labels("ID", "DNI", "Nombre", "Apellidos", "Teléfono", "Email", "Municipio")));
+                fields("id", "dni", "nombre", "apellidos", "telefono", "email", "direccion", "codigoPostal", "municipioId"),
+                labels("ID", "DNI", "Nombre", "Apellidos", "Teléfono", "Email", "Dirección", "CP", "Municipio")));
         tabs.addTab("Veterinarios", new CrudPanel<Veterinario>(
                 "Veterinarios", new VeterinarioServiceImpl(), Veterinario.class,
-                fields("id", "codigo", "dni", "nombre", "apellidos", "telefono", "email", "municipioId"),
-                labels("ID", "Código", "DNI", "Nombre", "Apellidos", "Teléfono", "Email", "Municipio")));
+                fields("id", "codigo", "dni", "nombre", "apellidos", "telefono", "email", "direccion", "codigoPostal", "municipioId"),
+                labels("ID", "Código", "DNI", "Nombre", "Apellidos", "Teléfono", "Email", "Dirección", "CP", "Municipio")));
         tabs.addTab("Granjas", new CrudPanel<Granja>(
                 "Granjas", new GranjaServiceImpl(), Granja.class,
-                fields("id", "nombre", "direccion", "municipioId", "ganaderoId"),
-                labels("ID", "Nombre", "Direccion", "Municipio", "Ganadero")));
+                fields("id", "nombre", "direccion", "codigoPostal", "municipioId", "ganaderoId"),
+                labels("ID", "Nombre", "Dirección", "CP", "Municipio", "Ganadero")));
         tabs.addTab("Semillas", new CrudPanel<Semilla>(
                 "Semillas", new SemillaServiceImpl(), Semilla.class,
                 fields("id", "codigo", "descripcion"),
