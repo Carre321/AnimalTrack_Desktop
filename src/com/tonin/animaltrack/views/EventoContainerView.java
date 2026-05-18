@@ -8,6 +8,8 @@ import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
+import com.tonin.animaltrack.ui.MainWindow;
+
 public class EventoContainerView extends AbstractView implements FarmFilterAware {
 
     private JTabbedPane contentTabbedPanel;
@@ -31,6 +33,7 @@ public class EventoContainerView extends AbstractView implements FarmFilterAware
         mainPanel.add(buttonPanel, BorderLayout.NORTH);
 
         JButton nuevoEventoButton = new JButton("Nuevo Evento");
+        nuevoEventoButton.setEnabled(MainWindow.getInstance().getPermissions().canCreateEvento());
         nuevoEventoButton.setIcon(new ImageIcon(
                 EventoContainerView.class.getResource("/animaltrack/icons/32/add-new.png")));
         nuevoEventoButton.addActionListener(e -> {

@@ -55,6 +55,7 @@ import com.tonin.animaltrack.service.impl.EventoServiceImpl;
 import com.tonin.animaltrack.service.impl.GranjaServiceImpl;
 import com.tonin.animaltrack.service.impl.RazaServiceImpl;
 import com.tonin.animaltrack.service.impl.SexoServiceImpl;
+import com.tonin.animaltrack.ui.MainWindow;
 import com.tonin.animaltrack.views.controler.AnimalCreateController;
 import com.tonin.animaltrack.views.controler.CancelController;
 import com.tonin.animaltrack.views.controler.Controller;
@@ -84,6 +85,7 @@ public class AnimalCreateView extends AbstractView {
     private RazaService razaService;
     private JButton agreeButton;
     private JButton reloadButton;
+    private JButton deleteButton;
     private JTable ultimosEventosTable;
     private JLabel fotoLabel;
     private JButton seleccionarFotoButton;
@@ -167,6 +169,12 @@ public class AnimalCreateView extends AbstractView {
         reloadButton.addActionListener(e -> reloadBySelectedFarm());
         buttonPanel.add(reloadButton);
 
+        deleteButton = new JButton("Dar de baja");
+        deleteButton.setIcon(new ImageIcon(AnimalCreateView.class.getResource("/animaltrack/icons/32/delete.png")));
+        deleteButton.addActionListener(e -> bajaAnimal());
+        deleteButton.setEnabled(false);
+        buttonPanel.add(deleteButton);
+
         add(buttonPanel, BorderLayout.SOUTH);
 
         showFechaBaja(false);
@@ -212,7 +220,10 @@ public class AnimalCreateView extends AbstractView {
 
     private void loadInitialData() {
         try {
-            setModel(granjaCombo, granjaService.findAll(), true);
+            List<GranjaDTO> granjas = MainWindow.getInstance().getPermissions().isAdmin()
+                    ? granjaService.findAll()
+                    : MainWindow.getInstance().getAvailableGranjas();
+            setModel(granjaCombo, granjas, true);
             setModel(sexoCombo, sexoService.findAll(), false);
             setModel(razaCombo, razaService.findAll(), true);
         } catch (Exception e) {
@@ -271,6 +282,11 @@ public class AnimalCreateView extends AbstractView {
     }
 
     public boolean createAnimal() {
+        if (!MainWindow.getInstance().getPermissions().canCreateAnimal()) {
+            JOptionPane.showMessageDialog(this, "No tienes permisos para crear animales.", "Acceso denegado",
+                    JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
         try {
             Animal animal = buildAnimal();
             AnimalDTO created = animalService.create(animal);
@@ -294,6 +310,11 @@ public class AnimalCreateView extends AbstractView {
     }
 
     public boolean updateAnimal() {
+        if (!MainWindow.getInstance().getPermissions().canEditAnimal()) {
+            JOptionPane.showMessageDialog(this, "No tienes permisos para editar animales.", "Acceso denegado",
+                    JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
         try {
             Animal animal = buildAnimal();
             if (animal.getId() == null) {
@@ -339,6 +360,8 @@ public class AnimalCreateView extends AbstractView {
         padreInternoCombo.setEnabled(editable);
         seleccionarFotoButton.setEnabled(editable);
         quitarFotoButton.setEnabled(editable && fotoBytes != null);
+        deleteButton.setEnabled(!editable && MainWindow.getInstance().getPermissions().canDeleteAnimal()
+                && parseLong(idTF.getText()) != null);
         configureSecondaryButton(editable);
     }
 
@@ -368,6 +391,45 @@ public class AnimalCreateView extends AbstractView {
         selectComboItem(madreInternaCombo, animal.getMadreInternaId());
         selectComboItem(padreInternoCombo, animal.getPadreInternoId());
         loadUltimosEventos(animal.getId());
+        deleteButton.setEnabled(MainWindow.getInstance().getPermissions().canDeleteAnimal()
+                && animal.getId() != null && animal.getFechaBaja() == null);
+    }
+
+    public boolean bajaAnimal() {
+        if (!MainWindow.getInstance().getPermissions().canDeleteAnimal()) {
+            JOptionPane.showMessageDialog(this, "No tienes permisos para dar de baja animales.", "Acceso denegado",
+                    JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+        Long id = parseLong(idTF.getText());
+        String crotal = trimToNull(crotalTF.getText());
+        if (id == null || crotal == null) {
+            JOptionPane.showMessageDialog(this, "No hay ningún animal cargado para dar de baja.", "Validación",
+                    JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+        String typed = JOptionPane.showInputDialog(this, "Para dar de baja escribe \"" + crotal + "\":",
+                "Confirmar baja", JOptionPane.WARNING_MESSAGE);
+        if (!crotal.equals(typed)) {
+            return false;
+        }
+        try {
+            Animal animal = buildAnimal();
+            animal.setFechaBaja(new Date(System.currentTimeMillis()));
+            animalService.update(animal);
+            AnimalDTO updated = animalService.findById(id);
+            if (updated != null) {
+                setModel(updated);
+            }
+            setEditable(false);
+            JOptionPane.showMessageDialog(this, "Animal dado de baja correctamente.", "Correcto",
+                    JOptionPane.INFORMATION_MESSAGE);
+            return true;
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
     }
 
     private Animal buildAnimal() {
@@ -416,6 +478,7 @@ public class AnimalCreateView extends AbstractView {
         clearComboSelection(padreInternoCombo);
         updateFotoPreview();
         ultimosEventosTable.setModel(createEventosTableModel(Collections.<EventoDTO>emptyList()));
+        deleteButton.setEnabled(false);
         configureSecondaryButton(true);
         showFechaBaja(false);
     }

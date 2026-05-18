@@ -77,6 +77,7 @@ import com.tonin.animaltrack.service.impl.TratamientoServiceImpl;
 import com.tonin.animaltrack.service.impl.UsuarioLoginServiceImpl;
 import com.tonin.animaltrack.service.impl.VeterinarioGranjaServiceImpl;
 import com.tonin.animaltrack.service.impl.VeterinarioServiceImpl;
+import com.tonin.animaltrack.ui.MainWindow;
 
 public class AdminContainerView extends AbstractView {
 
@@ -88,6 +89,10 @@ public class AdminContainerView extends AbstractView {
     public AdminContainerView() {
         setName("Administración");
         setLayout(new BorderLayout(0, 0));
+        if (!MainWindow.getInstance().getPermissions().canOpenAdmin()) {
+            add(new JLabel("No tienes permisos para abrir Administración."), BorderLayout.CENTER);
+            return;
+        }
 
         JTabbedPane tabs = new JTabbedPane(JTabbedPane.TOP);
         add(tabs, BorderLayout.CENTER);

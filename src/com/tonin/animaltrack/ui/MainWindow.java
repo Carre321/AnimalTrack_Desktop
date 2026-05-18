@@ -68,7 +68,9 @@ public class MainWindow {
     private JButton usuarioButton;
     private JComboBox<ComboItem<GranjaDTO>> granjaComboBox;
     private UsuarioLoginDTO currentUser;
+    private UserPermissions permissions = new UserPermissions(null);
     private Long selectedGranjaId;
+    private List<GranjaDTO> availableGranjas = new ArrayList<GranjaDTO>();
     private final GranjaService granjaService;
     private final VeterinarioGranjaService veterinarioGranjaService;
 
@@ -250,6 +252,7 @@ public class MainWindow {
 
     public void setCurrentUser(UsuarioLoginDTO user) {
         currentUser = user;
+        permissions = new UserPermissions(user);
         if (usuarioButton == null) {
             return;
         }
@@ -257,13 +260,27 @@ public class MainWindow {
             usuarioButton.setText("");
             usuarioButton.setToolTipText("Sin sesión");
             selectedGranjaId = null;
+            configureMenuForCurrentUser();
             loadFarmCombo(new ArrayList<GranjaDTO>());
             return;
         }
         usuarioButton.setText(user.getNombreVisible());
         usuarioButton.setToolTipText(user.getEmail() + " (" + user.getRol() + ")");
+        configureMenuForCurrentUser();
         loadFarmCombo(resolveAvailableFarms(user));
         setView(new DashboardGanaderoView());
+    }
+
+    public UsuarioLoginDTO getCurrentUser() {
+        return currentUser;
+    }
+
+    public UserPermissions getPermissions() {
+        return permissions;
+    }
+
+    public List<GranjaDTO> getAvailableGranjas() {
+        return new ArrayList<GranjaDTO>(availableGranjas);
     }
 
     public Long getSelectedGranjaId() {
@@ -358,7 +375,15 @@ public class MainWindow {
         return user != null && user.getRol() != null && "ADMINISTRADOR".equalsIgnoreCase(user.getRol());
     }
 
+    private void configureMenuForCurrentUser() {
+        animalButton.setVisible(permissions.canOpenAnimals());
+        eventoButton.setVisible(permissions.canOpenEvents());
+        veterinarioButton.setVisible(permissions.canOpenVeterinarios());
+        adminButton.setVisible(permissions.canOpenAdmin());
+    }
+
     private void loadFarmCombo(List<GranjaDTO> granjas) {
+        availableGranjas = granjas == null ? new ArrayList<GranjaDTO>() : new ArrayList<GranjaDTO>(granjas);
         DefaultComboBoxModel<ComboItem<GranjaDTO>> model = new DefaultComboBoxModel<ComboItem<GranjaDTO>>();
         if (granjas != null) {
             for (GranjaDTO granja : granjas) {
@@ -370,6 +395,9 @@ public class MainWindow {
         granjaComboBox.getEditor().setItem("");
         granjaComboBox.setEnabled(model.getSize() > 0);
         selectedGranjaId = null;
+        if (!permissions.isAdmin() && model.getSize() > 0) {
+            granjaComboBox.setSelectedIndex(0);
+        }
     }
 
     private ComboItem<GranjaDTO> getSelectedGranjaItem() {

@@ -32,6 +32,8 @@ import com.tonin.animaltrack.model.Evento;
 import com.tonin.animaltrack.model.Semilla;
 import com.tonin.animaltrack.model.TipoEvento;
 import com.tonin.animaltrack.model.Tratamiento;
+import com.tonin.animaltrack.dao.criteria.AnimalCriteria;
+import com.tonin.animaltrack.dao.Results;
 import com.tonin.animaltrack.model.dto.AnimalDTO;
 import com.tonin.animaltrack.model.dto.EventoDTO;
 import com.tonin.animaltrack.model.dto.VeterinarioDTO;
@@ -49,6 +51,7 @@ import com.tonin.animaltrack.service.impl.SemillaServiceImpl;
 import com.tonin.animaltrack.service.impl.TipoEventoServiceImpl;
 import com.tonin.animaltrack.service.impl.TratamientoServiceImpl;
 import com.tonin.animaltrack.service.impl.VeterinarioServiceImpl;
+import com.tonin.animaltrack.ui.MainWindow;
 import com.tonin.animaltrack.views.controler.CancelController;
 import com.tonin.animaltrack.views.controler.Controller;
 import com.tonin.animaltrack.views.controler.EventoCreateController;
@@ -79,6 +82,7 @@ public class EventoCreateView extends AbstractView {
     private EventoService eventoService;
     private JButton agreeButton;
     private JButton reloadButton;
+    private JButton deleteButton;
 
     public EventoCreateView() {
         initialize();
@@ -139,6 +143,12 @@ public class EventoCreateView extends AbstractView {
         reloadButton.addActionListener(e -> loadInitialData());
         buttonPanel.add(reloadButton);
 
+        deleteButton = new JButton("Borrar");
+        deleteButton.setIcon(new ImageIcon(EventoCreateView.class.getResource("/animaltrack/icons/32/delete.png")));
+        deleteButton.addActionListener(e -> deleteEvento());
+        deleteButton.setEnabled(false);
+        buttonPanel.add(deleteButton);
+
         add(buttonPanel, BorderLayout.SOUTH);
     }
 
@@ -154,7 +164,10 @@ public class EventoCreateView extends AbstractView {
 
     private void loadInitialData() {
         try {
-            setModel(animalCombo, animalService.findAll(), false);
+            AnimalCriteria criteria = new AnimalCriteria();
+            criteria.setGranjaId(MainWindow.getInstance().getSelectedGranjaId());
+            Results<AnimalDTO> results = animalService.findByCriteria(criteria, 1, Integer.MAX_VALUE);
+            setModel(animalCombo, results == null ? null : results.getPageResults(), false);
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
             setModel(animalCombo, null, false);
@@ -176,6 +189,11 @@ public class EventoCreateView extends AbstractView {
     }
 
     public boolean createEvento() {
+        if (!MainWindow.getInstance().getPermissions().canCreateEvento()) {
+            JOptionPane.showMessageDialog(this, "No tienes permisos para crear eventos.", "Acceso denegado",
+                    JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
         try {
             Evento evento = buildEvento();
             EventoDTO created = eventoService.create(evento);
@@ -197,6 +215,11 @@ public class EventoCreateView extends AbstractView {
     }
 
     public boolean updateEvento() {
+        if (!MainWindow.getInstance().getPermissions().canEditEvento()) {
+            JOptionPane.showMessageDialog(this, "No tienes permisos para editar eventos.", "Acceso denegado",
+                    JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
         try {
             Evento evento = buildEvento();
             if (evento.getId() == null) {
@@ -236,6 +259,8 @@ public class EventoCreateView extends AbstractView {
         precioTF.setEditable(editable);
         resultadoTF.setEditable(editable);
         observacionesTF.setEditable(editable);
+        deleteButton.setEnabled(!editable && MainWindow.getInstance().getPermissions().canDeleteEvento()
+                && parseLong(idTF.getText()) != null);
         configureSecondaryButton(editable);
     }
 
@@ -263,6 +288,43 @@ public class EventoCreateView extends AbstractView {
         precioTF.setText(evento.getPrecioEvento() == null ? "" : String.valueOf(evento.getPrecioEvento()));
         resultadoTF.setText(evento.getResultado() == null ? "" : evento.getResultado());
         observacionesTF.setText(evento.getObservaciones() == null ? "" : evento.getObservaciones());
+        deleteButton.setEnabled(MainWindow.getInstance().getPermissions().canDeleteEvento() && evento.getId() != null);
+    }
+
+    public boolean deleteEvento() {
+        if (!MainWindow.getInstance().getPermissions().canDeleteEvento()) {
+            JOptionPane.showMessageDialog(this, "No tienes permisos para borrar eventos.", "Acceso denegado",
+                    JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+        Long id = parseLong(idTF.getText());
+        if (id == null) {
+            JOptionPane.showMessageDialog(this, "No hay ningún evento cargado para borrar.", "Validación",
+                    JOptionPane.WARNING_MESSAGE);
+            return false;
+        }
+        String expected = "ELIMINAR";
+        ComboItem<AnimalDTO> animalItem = getSelectedItem(animalCombo);
+        ComboItem<TipoEvento> tipoItem = getSelectedItem(tipoEventoCombo);
+        if (animalItem != null && animalItem.getValue() != null && tipoItem != null && tipoItem.getValue() != null) {
+            expected = animalItem.getValue().getCrotal() + " " + tipoItem.getValue().getNombre();
+        }
+        String typed = JOptionPane.showInputDialog(this, "Para borrar escribe \"" + expected + "\":",
+                "Confirmar borrado", JOptionPane.WARNING_MESSAGE);
+        if (!expected.equals(typed)) {
+            return false;
+        }
+        try {
+            eventoService.delete(id);
+            JOptionPane.showMessageDialog(this, "Evento borrado correctamente.", "Correcto",
+                    JOptionPane.INFORMATION_MESSAGE);
+            clearForm();
+            return true;
+        } catch (Exception ex) {
+            logger.error(ex.getMessage(), ex);
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
     }
 
     private Evento buildEvento() {
@@ -333,6 +395,7 @@ public class EventoCreateView extends AbstractView {
         precioTF.setText("");
         resultadoTF.setText("");
         observacionesTF.setText("");
+        deleteButton.setEnabled(false);
         configureSecondaryButton(true);
     }
 

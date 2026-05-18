@@ -323,7 +323,9 @@ public class EventoSearchView extends AbstractView implements FarmFilterAware {
         EventoCreateView eventoView = new EventoCreateView();
         eventoView.setModel(evento);
         eventoView.setEditable(false);
-        eventoView.setAgreeController(new EventoSetEditableController(eventoView));
+        if (MainWindow.getInstance().getPermissions().canEditEvento()) {
+            eventoView.setAgreeController(new EventoSetEditableController(eventoView));
+        }
         containerView.addClosableTab(buildViewTitle(evento), eventoView);
     }
 

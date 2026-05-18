@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -57,6 +58,7 @@ public class AnimalSearchView extends AbstractView implements FarmFilterAware {
     private JButton anteriorButton;
     private JButton siguienteButton;
     private JButton searchButton;
+    private JCheckBox historialCB;
     private JComboBox<ComboItem<Sexo>> sexoCB;
     private JComboBox<ComboItem<Raza>> razaCB;
     private AnimalContainerView containerView;
@@ -112,6 +114,10 @@ public class AnimalSearchView extends AbstractView implements FarmFilterAware {
 
         razaCB = new JComboBox<ComboItem<Raza>>();
         searchPanel.add(razaCB);
+
+        historialCB = new JCheckBox("Historial");
+        historialCB.setToolTipText("Mostrar también animales dados de baja");
+        searchPanel.add(historialCB);
         
         searchButton = new JButton("Buscar");
         searchPanel.add(searchButton);
@@ -166,6 +172,7 @@ public class AnimalSearchView extends AbstractView implements FarmFilterAware {
         crotalTF.addKeyListener(searchController);
         sexoCB.addItemListener(searchController);
         razaCB.addItemListener(searchController);
+        historialCB.addItemListener(searchController);
         resultsTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -193,6 +200,7 @@ public class AnimalSearchView extends AbstractView implements FarmFilterAware {
         ComboItem<Raza> razaItem = getSelectedItem(razaCB);
         criteria.setRazaId(razaItem == null || razaItem.getValue() == null ? null : razaItem.getValue().getId());
         criteria.setGranjaId(MainWindow.getInstance().getSelectedGranjaId());
+        criteria.setIncludeHistory(historialCB.isSelected());
 
         return criteria;
 
@@ -344,7 +352,9 @@ public class AnimalSearchView extends AbstractView implements FarmFilterAware {
         AnimalCreateView animalView = new AnimalCreateView();
         animalView.setModel(animal);
         animalView.setEditable(false);
-        animalView.setAgreeController(new AnimalSetEditableController(animalView));
+        if (MainWindow.getInstance().getPermissions().canEditAnimal()) {
+            animalView.setAgreeController(new AnimalSetEditableController(animalView));
+        }
         containerView.addClosableTab(buildViewTitle(animal), animalView);
     }
 
