@@ -34,6 +34,10 @@ public class UserPermissions {
         return isAdmin() || isGanadero() || isVeterinario();
     }
 
+    public boolean canOpenHome() {
+        return isAuthenticated();
+    }
+
     public boolean canOpenEvents() {
         return isAdmin() || isGanadero() || isVeterinario();
     }

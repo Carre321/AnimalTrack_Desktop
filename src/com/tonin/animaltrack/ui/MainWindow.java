@@ -46,6 +46,7 @@ import com.tonin.animaltrack.views.DashboardGanaderoView;
 import com.tonin.animaltrack.views.controler.OpenAdminController;
 import com.tonin.animaltrack.views.controler.OpenAnimalSearchController;
 import com.tonin.animaltrack.views.controler.OpenEventoSearchController;
+import com.tonin.animaltrack.views.controler.OpenInicioController;
 import com.tonin.animaltrack.views.controler.OpenVeterinarioSearchController;
 
 
@@ -61,6 +62,7 @@ public class MainWindow {
 
     private JFrame frame;
     private JPanel contentPanel;
+    private JButton inicioButton;
     private JButton animalButton;
     private JButton eventoButton;
     private JButton veterinarioButton;
@@ -131,10 +133,19 @@ public class MainWindow {
         eastPanel.add(mainMenuPanel, BorderLayout.CENTER);
         GridBagLayout gbl_mainMenuPanel = new GridBagLayout();
         gbl_mainMenuPanel.columnWidths = new int[] { 0, 0 };
-        gbl_mainMenuPanel.rowHeights = new int[] { 0, 0, 0, 0, 0 };
+        gbl_mainMenuPanel.rowHeights = new int[] { 0, 0, 0, 0, 0, 0 };
         gbl_mainMenuPanel.columnWeights = new double[] { 0.0, Double.MIN_VALUE };
-        gbl_mainMenuPanel.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE };
+        gbl_mainMenuPanel.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE };
         mainMenuPanel.setLayout(gbl_mainMenuPanel);
+
+        inicioButton = new JButton("Inicio");
+        inicioButton.setIcon(new ImageIcon(MainWindow.class.getResource("/animaltrack/icons/32/dashboard.png")));
+        GridBagConstraints gbc_inicioButton = new GridBagConstraints();
+        gbc_inicioButton.fill = GridBagConstraints.HORIZONTAL;
+        gbc_inicioButton.insets = new Insets(0, 0, 5, 0);
+        gbc_inicioButton.gridx = 0;
+        gbc_inicioButton.gridy = 0;
+        mainMenuPanel.add(inicioButton, gbc_inicioButton);
 
         eventoButton = new JButton("Eventos");
         eventoButton.setIcon(new ImageIcon(MainWindow.class.getResource("/animaltrack/icons/32/calendar.png")));
@@ -142,7 +153,7 @@ public class MainWindow {
         gbc_eventoButton.fill = GridBagConstraints.HORIZONTAL;
         gbc_eventoButton.insets = new Insets(0, 0, 5, 0);
         gbc_eventoButton.gridx = 0;
-        gbc_eventoButton.gridy = 0;
+        gbc_eventoButton.gridy = 1;
         mainMenuPanel.add(eventoButton, gbc_eventoButton);
 
         animalButton = new JButton("Animal");
@@ -151,7 +162,7 @@ public class MainWindow {
         gbc_animalButton.fill = GridBagConstraints.HORIZONTAL;
         gbc_animalButton.insets = new Insets(0, 0, 5, 0);
         gbc_animalButton.gridx = 0;
-        gbc_animalButton.gridy = 1;
+        gbc_animalButton.gridy = 2;
         mainMenuPanel.add(animalButton, gbc_animalButton);
 
         veterinarioButton = new JButton("Veterinario");
@@ -159,7 +170,7 @@ public class MainWindow {
         GridBagConstraints gbc_veterinarioButton = new GridBagConstraints();
         gbc_veterinarioButton.fill = GridBagConstraints.HORIZONTAL;
         gbc_veterinarioButton.gridx = 0;
-        gbc_veterinarioButton.gridy = 2;
+        gbc_veterinarioButton.gridy = 3;
         mainMenuPanel.add(veterinarioButton, gbc_veterinarioButton);
 
         adminButton = new JButton("Administración");
@@ -168,7 +179,7 @@ public class MainWindow {
         gbc_adminButton.fill = GridBagConstraints.HORIZONTAL;
         gbc_adminButton.insets = new Insets(5, 0, 0, 0);
         gbc_adminButton.gridx = 0;
-        gbc_adminButton.gridy = 3;
+        gbc_adminButton.gridy = 4;
         mainMenuPanel.add(adminButton, gbc_adminButton);
 
         contentPanel = new JPanel();
@@ -223,6 +234,8 @@ public class MainWindow {
     }
 
     private void postinitialize() {
+        OpenInicioController inicioController = new OpenInicioController();
+        inicioButton.addActionListener(inicioController);
         OpenAnimalSearchController animalController = new OpenAnimalSearchController();
         animalButton.addActionListener(animalController);
         OpenEventoSearchController eventoController = new OpenEventoSearchController();
@@ -376,6 +389,7 @@ public class MainWindow {
     }
 
     private void configureMenuForCurrentUser() {
+        inicioButton.setVisible(permissions.canOpenHome());
         animalButton.setVisible(permissions.canOpenAnimals());
         eventoButton.setVisible(permissions.canOpenEvents());
         veterinarioButton.setVisible(permissions.canOpenVeterinarios());
