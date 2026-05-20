@@ -35,6 +35,7 @@ import org.apache.logging.log4j.Logger;
 
 import com.tonin.animaltrack.dao.criteria.EventoCriteria;
 import com.tonin.animaltrack.model.dto.EventoDTO;
+import com.tonin.animaltrack.model.dto.GranjaDTO;
 import com.tonin.animaltrack.service.EventoService;
 import com.tonin.animaltrack.service.impl.EventoServiceImpl;
 import com.tonin.animaltrack.ui.MainWindow;
@@ -65,9 +66,13 @@ public class DashboardGanaderoView extends AbstractView implements FarmFilterAwa
     private final JLabel mientenLabel;
     private final JLabel proximasLabel;
     private final JLabel granjaLabel;
+    private final JLabel titleLabel;
+    private final JLabel subtitleLabel;
+    private final JLabel tableTitle;
     private final JXTable table;
 
     private List<ProximoPartoRow> rows = Collections.emptyList();
+    private boolean farmListMode;
 
     public DashboardGanaderoView() {
         this.eventoService = new EventoServiceImpl();
@@ -75,6 +80,9 @@ public class DashboardGanaderoView extends AbstractView implements FarmFilterAwa
         this.mientenLabel = new JLabel("0");
         this.proximasLabel = new JLabel("0");
         this.granjaLabel = new JLabel();
+        this.titleLabel = new JLabel();
+        this.subtitleLabel = new JLabel();
+        this.tableTitle = new JLabel();
         this.table = new DashboardTable();
         initialize();
         refreshForSelectedFarm();
@@ -93,12 +101,12 @@ public class DashboardGanaderoView extends AbstractView implements FarmFilterAwa
         JPanel headerPanel = new JPanel(new BorderLayout(0, 4));
         headerPanel.setOpaque(false);
 
-        JLabel titleLabel = new JLabel("Vacas próximas a cumplir preñez");
+        titleLabel.setText("Vacas próximas a cumplir preñez");
         titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD, 22f));
         titleLabel.setForeground(TOTAL_COLOR);
         headerPanel.add(titleLabel, BorderLayout.NORTH);
 
-        JLabel subtitleLabel = new JLabel("Última inseminación + revisión/diagnóstico positivo, sin parto ni aborto después.");
+        subtitleLabel.setText("Última inseminación + revisión/diagnóstico positivo, sin parto ni aborto después.");
         subtitleLabel.setForeground(new Color(86, 99, 105));
         headerPanel.add(subtitleLabel, BorderLayout.CENTER);
 
@@ -136,7 +144,7 @@ public class DashboardGanaderoView extends AbstractView implements FarmFilterAwa
 
         JPanel tableHeaderPanel = new JPanel(new BorderLayout());
         tableHeaderPanel.setOpaque(false);
-        JLabel tableTitle = new JLabel("Seguimiento reproductivo");
+        tableTitle.setText("Seguimiento reproductivo");
         tableTitle.setFont(tableTitle.getFont().deriveFont(Font.BOLD, 15f));
         tableHeaderPanel.add(tableTitle, BorderLayout.WEST);
         granjaLabel.setForeground(new Color(86, 99, 105));
@@ -174,12 +182,19 @@ public class DashboardGanaderoView extends AbstractView implements FarmFilterAwa
 
     @Override
     public void refreshForSelectedFarm() {
+        farmListMode = MainWindow.getInstance().getPermissions().isVeterinario()
+                && MainWindow.getInstance().getSelectedGranjaId() == null;
         rows = buildRows();
         updateSummary();
         updateTable();
     }
 
     private List<ProximoPartoRow> buildRows() {
+        if (!MainWindow.getInstance().getPermissions().isAdmin()
+                && MainWindow.getInstance().getSelectedGranjaId() == null) {
+            return Collections.emptyList();
+        }
+
         EventoCriteria criteria = new EventoCriteria();
         criteria.setGranjaId(MainWindow.getInstance().getSelectedGranjaId());
 
@@ -283,6 +298,22 @@ public class DashboardGanaderoView extends AbstractView implements FarmFilterAwa
     }
 
     private void updateSummary() {
+        if (farmListMode) {
+            int granjas = MainWindow.getInstance().getAvailableGranjas().size();
+            titleLabel.setText("Granjas asociadas");
+            subtitleLabel.setText("Selecciona una granja en el desplegable superior para ver animales y eventos.");
+            tableTitle.setText("Granjas disponibles");
+            totalLabel.setText(String.valueOf(granjas));
+            mientenLabel.setText("0");
+            proximasLabel.setText("0");
+            granjaLabel.setText("Sin granja seleccionada");
+            return;
+        }
+
+        titleLabel.setText("Vacas próximas a cumplir preñez");
+        subtitleLabel.setText("Última inseminación + revisión/diagnóstico positivo, sin parto ni aborto después.");
+        tableTitle.setText("Seguimiento reproductivo");
+
         int mienten = 0;
         int proximas = 0;
         for (ProximoPartoRow row : rows) {
@@ -296,10 +327,19 @@ public class DashboardGanaderoView extends AbstractView implements FarmFilterAwa
         totalLabel.setText(String.valueOf(rows.size()));
         mientenLabel.setText(String.valueOf(mienten));
         proximasLabel.setText(String.valueOf(proximas));
-        granjaLabel.setText(MainWindow.getInstance().getSelectedGranjaId() == null ? "Todas las granjas" : "Granja seleccionada");
+        if (MainWindow.getInstance().getPermissions().isAdmin()) {
+            granjaLabel.setText(MainWindow.getInstance().getSelectedGranjaId() == null ? "Todas las granjas" : "Granja seleccionada");
+        } else {
+            granjaLabel.setText(MainWindow.getInstance().getSelectedGranjaId() == null ? "Sin granja asociada" : "Granja seleccionada");
+        }
     }
 
     private void updateTable() {
+        if (farmListMode) {
+            updateFarmListTable();
+            return;
+        }
+
         DefaultTableModel model = new DefaultTableModel(
                 new Object[] { "Estado", "Crotal", "Animal", "Inseminación", "Confirmación", "Fin preñez", "Días", "DiasRestantes" }, 0) {
                     private static final long serialVersionUID = 1L;
@@ -330,6 +370,34 @@ public class DashboardGanaderoView extends AbstractView implements FarmFilterAwa
         table.getColumnExt(5).setPreferredWidth(120);
         table.getColumnExt(6).setPreferredWidth(90);
         table.getColumnExt(7).setVisible(false);
+    }
+
+    private void updateFarmListTable() {
+        DefaultTableModel model = new DefaultTableModel(new Object[] { "REGA", "Granja", "Municipio", "Provincia", "Ganadero" }, 0) {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        List<GranjaDTO> granjas = MainWindow.getInstance().getAvailableGranjas();
+        if (granjas.isEmpty()) {
+            model.addRow(new Object[] { "", "No tienes granjas asociadas.", "", "", "" });
+        } else {
+            for (GranjaDTO granja : granjas) {
+                model.addRow(new Object[] { granja.getRega(), granja.getNombre(), granja.getMunicipioNombre(),
+                        granja.getProvinciaNombre(), granja.getGanaderoNombreCompleto() });
+            }
+        }
+
+        table.setModel(model);
+        table.getColumnExt(0).setPreferredWidth(150);
+        table.getColumnExt(1).setPreferredWidth(220);
+        table.getColumnExt(2).setPreferredWidth(160);
+        table.getColumnExt(3).setPreferredWidth(160);
+        table.getColumnExt(4).setPreferredWidth(220);
     }
 
     private static class ProximoPartoRow {
@@ -417,6 +485,9 @@ public class DashboardGanaderoView extends AbstractView implements FarmFilterAwa
         private Long getDiasRestantes(int row) {
             int modelRow = convertRowIndexToModel(row);
             if (modelRow < 0 || modelRow >= getModel().getRowCount()) {
+                return null;
+            }
+            if (getModel().getColumnCount() <= 7) {
                 return null;
             }
             Object value = getModel().getValueAt(modelRow, 7);

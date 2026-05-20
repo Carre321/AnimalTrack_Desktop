@@ -2,6 +2,7 @@ package com.tonin.animaltrack.views;
 
 import java.awt.FlowLayout;
 
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -18,7 +19,8 @@ public class CerrarTab extends JPanel {
         JLabel titleLabel = new JLabel(title + " ");
         add(titleLabel);
 
-        JButton closeButton = new JButton("x");
+        JButton closeButton = new JButton(new ImageIcon(CerrarTab.class.getResource("/animaltrack/icons/16/cerrar-pestana.png")));
+        closeButton.setToolTipText("Cerrar");
         closeButton.setFocusable(false);
         closeButton.setBorderPainted(false);
         closeButton.setContentAreaFilled(false);
@@ -32,4 +34,3 @@ public class CerrarTab extends JPanel {
         add(closeButton);
     }
 }
- 

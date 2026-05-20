@@ -624,7 +624,7 @@ public class AnimalCreateView extends AbstractView {
     private String buildLabel(Object value) {
         if (value instanceof GranjaDTO) {
             GranjaDTO granja = (GranjaDTO) value;
-            return granja.getNombre();
+            return buildGranjaLabel(granja);
         }
         if (value instanceof Sexo) {
             return ((Sexo) value).getNombre();
@@ -668,6 +668,15 @@ public class AnimalCreateView extends AbstractView {
 
     private String defaultString(String value) {
         return value == null ? "" : value;
+    }
+
+    private String buildGranjaLabel(GranjaDTO granja) {
+        if (granja == null) {
+            return "";
+        }
+        String rega = granja.getRega() == null ? "" : granja.getRega().trim();
+        String nombre = granja.getNombre() == null ? "" : granja.getNombre().trim();
+        return rega.isEmpty() ? nombre : rega + " - " + nombre;
     }
 
     private Long parseLong(String value) {

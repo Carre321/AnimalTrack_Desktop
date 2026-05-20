@@ -221,7 +221,11 @@ public class EventoSearchView extends AbstractView implements FarmFilterAware {
         if (veterinarioItem != null && veterinarioItem.getValue() != null) {
             criteria.setVeterinarioId(veterinarioItem.getValue().getId());
         }
-        criteria.setGranjaId(MainWindow.getInstance().getSelectedGranjaId());
+        Long selectedGranjaId = MainWindow.getInstance().getSelectedGranjaId();
+        criteria.setGranjaId(selectedGranjaId);
+        if (!MainWindow.getInstance().getPermissions().isAdmin() && selectedGranjaId == null) {
+            criteria.setGranjaId(-1L);
+        }
 
         return criteria;
     }

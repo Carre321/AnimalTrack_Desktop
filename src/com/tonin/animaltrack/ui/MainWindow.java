@@ -28,9 +28,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextArea;
 import javax.swing.UIManager;
 
-import com.formdev.flatlaf.FlatDarculaLaf;
-import com.formdev.flatlaf.FlatDarkLaf;
-import com.formdev.flatlaf.FlatIntelliJLaf;
+
 import com.formdev.flatlaf.FlatLightLaf;
 import com.tonin.animaltrack.model.VeterinarioGranja;
 import com.tonin.animaltrack.model.dto.GranjaDTO;
@@ -415,7 +413,7 @@ public class MainWindow {
         DefaultComboBoxModel<ComboItem<GranjaDTO>> model = new DefaultComboBoxModel<ComboItem<GranjaDTO>>();
         if (granjas != null) {
             for (GranjaDTO granja : granjas) {
-                model.addElement(new ComboItem<GranjaDTO>(granja, granja.getNombre()));
+                model.addElement(new ComboItem<GranjaDTO>(granja, buildGranjaLabel(granja)));
             }
         }
         granjaComboBox.setModel(model);
@@ -423,7 +421,7 @@ public class MainWindow {
         granjaComboBox.getEditor().setItem("");
         granjaComboBox.setEnabled(model.getSize() > 0);
         selectedGranjaId = null;
-        if (!permissions.isAdmin() && model.getSize() > 0) {
+        if (permissions.isGanadero() && model.getSize() > 0) {
             granjaComboBox.setSelectedIndex(0);
         }
     }
@@ -435,6 +433,15 @@ public class MainWindow {
                 ? (ComboItem<GranjaDTO>) selected
                 : null;
         return selectedItem;
+    }
+
+    private String buildGranjaLabel(GranjaDTO granja) {
+        if (granja == null) {
+            return "";
+        }
+        String rega = granja.getRega() == null ? "" : granja.getRega().trim();
+        String nombre = granja.getNombre() == null ? "" : granja.getNombre().trim();
+        return rega.isEmpty() ? nombre : rega + " - " + nombre;
     }
 
     private void refreshCurrentViewForFarmFilter() {

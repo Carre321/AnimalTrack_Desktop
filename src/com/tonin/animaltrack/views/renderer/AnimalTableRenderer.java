@@ -37,7 +37,7 @@ public class AnimalTableRenderer extends DefaultTableCellRenderer {
         case 3:
             return defaultString(animal.getSexoNombre());
         case 4:
-            return defaultString(animal.getGranjaNombre());
+            return buildGranjaLabel(animal);
         default:
             return "";
         }
@@ -45,5 +45,11 @@ public class AnimalTableRenderer extends DefaultTableCellRenderer {
 
     private String defaultString(String value) {
         return value == null ? "" : value;
+    }
+
+    private String buildGranjaLabel(AnimalDTO animal) {
+        String rega = defaultString(animal.getGranjaRega()).trim();
+        String nombre = defaultString(animal.getGranjaNombre()).trim();
+        return rega.isEmpty() ? nombre : rega + " - " + nombre;
     }
 }

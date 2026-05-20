@@ -59,6 +59,10 @@ import com.tonin.animaltrack.views.controler.EventoCreateController;
 public class EventoCreateView extends AbstractView {
 
 	private static Logger logger = LogManager.getLogger(EventoCreateView.class.getName());
+    private static final String CODIGO_INSEMINACION_ARTIFICIAL = "IA";
+    private static final String CODIGO_TRATAMIENTO = "TRATAMIENTO";
+    private static final String CODIGO_DIAGNOSTICO_PRENEZ = "PRENEZ";
+    private static final String CODIGO_REVISION_VETERINARIO = "REVISION";
 
     private JTextField idTF;
     private JComboBox<ComboItem<AnimalDTO>> animalCombo;
@@ -72,6 +76,10 @@ public class EventoCreateView extends AbstractView {
     private JTextField precioTF;
     private JTextField resultadoTF;
     private JTextField observacionesTF;
+    private JLabel resultadoLabel;
+    private JLabel semillaLabel;
+    private JLabel dosisLabel;
+    private JLabel tratamientoLabel;
 
     private AnimalService animalService;
     private TipoEventoService tipoEventoService;
@@ -127,11 +135,15 @@ public class EventoCreateView extends AbstractView {
         addField(formPanel, row++, "Fecha:", fechaChooser);
         addField(formPanel, row++, "Hora (HH:mm):", horaTF);
         addField(formPanel, row++, "Precio:", precioTF);
-        addField(formPanel, row++, "Resultado:", resultadoTF);
+        resultadoLabel = new JLabel("Resultado:");
+        addField(formPanel, row++, resultadoLabel, resultadoTF);
         addField(formPanel, row++, "Observaciones:", observacionesTF);
-        addField(formPanel, row++, "Semilla:", semillaCombo);
-        addField(formPanel, row++, "Dosis:", dosisCombo);
-        addField(formPanel, row++, "Tratamiento:", tratamientoCombo);
+        semillaLabel = new JLabel("Semilla:");
+        addField(formPanel, row++, semillaLabel, semillaCombo);
+        dosisLabel = new JLabel("Dosis:");
+        addField(formPanel, row++, dosisLabel, dosisCombo);
+        tratamientoLabel = new JLabel("Tratamiento:");
+        addField(formPanel, row++, tratamientoLabel, tratamientoCombo);
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 6));
         agreeButton = new JButton("Guardar");
@@ -150,6 +162,7 @@ public class EventoCreateView extends AbstractView {
         buttonPanel.add(deleteButton);
 
         add(buttonPanel, BorderLayout.SOUTH);
+        tipoEventoCombo.addItemListener(e -> refreshEventSpecificFields(true));
     }
 
     private void initServices() {
@@ -165,9 +178,14 @@ public class EventoCreateView extends AbstractView {
     private void loadInitialData() {
         try {
             AnimalCriteria criteria = new AnimalCriteria();
-            criteria.setGranjaId(MainWindow.getInstance().getSelectedGranjaId());
-            Results<AnimalDTO> results = animalService.findByCriteria(criteria, 1, Integer.MAX_VALUE);
-            setModel(animalCombo, results == null ? null : results.getPageResults(), false);
+            Long selectedGranjaId = MainWindow.getInstance().getSelectedGranjaId();
+            criteria.setGranjaId(selectedGranjaId);
+            if (!MainWindow.getInstance().getPermissions().isAdmin() && selectedGranjaId == null) {
+                setModel(animalCombo, null, false);
+            } else {
+                Results<AnimalDTO> results = animalService.findByCriteria(criteria, 1, Integer.MAX_VALUE);
+                setModel(animalCombo, results == null ? null : results.getPageResults(), false);
+            }
         } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
             setModel(animalCombo, null, false);
@@ -186,6 +204,7 @@ public class EventoCreateView extends AbstractView {
             setModel(dosisCombo, null, true);
             setModel(tratamientoCombo, null, true);
         }
+        refreshEventSpecificFields(true);
     }
 
     public boolean createEvento() {
@@ -262,6 +281,7 @@ public class EventoCreateView extends AbstractView {
         deleteButton.setEnabled(!editable && MainWindow.getInstance().getPermissions().canDeleteEvento()
                 && parseLong(idTF.getText()) != null);
         configureSecondaryButton(editable);
+        refreshEventSpecificFields(false);
     }
 
     public void setModel(EventoDTO evento) {
@@ -289,6 +309,7 @@ public class EventoCreateView extends AbstractView {
         resultadoTF.setText(evento.getResultado() == null ? "" : evento.getResultado());
         observacionesTF.setText(evento.getObservaciones() == null ? "" : evento.getObservaciones());
         deleteButton.setEnabled(MainWindow.getInstance().getPermissions().canDeleteEvento() && evento.getId() != null);
+        refreshEventSpecificFields(false);
     }
 
     public boolean deleteEvento() {
@@ -340,12 +361,19 @@ public class EventoCreateView extends AbstractView {
         evento.setAnimalId(animalItem == null || animalItem.getValue() == null ? null : animalItem.getValue().getId());
         evento.setTipoEventoId(tipoEventoItem == null || tipoEventoItem.getValue() == null ? null : tipoEventoItem.getValue().getId());
         evento.setVeterinarioId(veterinarioItem == null || veterinarioItem.getValue() == null ? null : veterinarioItem.getValue().getId());
-        evento.setSemillaId(semillaItem == null || semillaItem.getValue() == null ? null : semillaItem.getValue().getId());
-        evento.setDosisId(dosisItem == null || dosisItem.getValue() == null ? null : dosisItem.getValue().getId());
-        evento.setTratamientoId(tratamientoItem == null || tratamientoItem.getValue() == null ? null : tratamientoItem.getValue().getId());
+        String codigoTipoEvento = getSelectedTipoEventoCode();
+        evento.setSemillaId(shouldShowSemilla(codigoTipoEvento) && semillaItem != null && semillaItem.getValue() != null
+                ? semillaItem.getValue().getId()
+                : null);
+        evento.setDosisId(shouldShowTratamiento(codigoTipoEvento) && dosisItem != null && dosisItem.getValue() != null
+                ? dosisItem.getValue().getId()
+                : null);
+        evento.setTratamientoId(shouldShowTratamiento(codigoTipoEvento) && tratamientoItem != null && tratamientoItem.getValue() != null
+                ? tratamientoItem.getValue().getId()
+                : null);
         evento.setFechaHora(buildFechaHora());
         evento.setPrecioEvento(parseBigDecimal(precioTF.getText()));
-        evento.setResultado(trimToNull(resultadoTF.getText()));
+        evento.setResultado(shouldShowResultado(codigoTipoEvento) ? trimToNull(resultadoTF.getText()) : null);
         evento.setObservaciones(trimToNull(observacionesTF.getText()));
         return evento;
     }
@@ -397,6 +425,63 @@ public class EventoCreateView extends AbstractView {
         observacionesTF.setText("");
         deleteButton.setEnabled(false);
         configureSecondaryButton(true);
+        refreshEventSpecificFields(true);
+    }
+
+    private void refreshEventSpecificFields(boolean clearHiddenValues) {
+        String codigo = getSelectedTipoEventoCode();
+        boolean showResultado = shouldShowResultado(codigo);
+        boolean showSemilla = shouldShowSemilla(codigo);
+        boolean showTratamiento = shouldShowTratamiento(codigo);
+
+        setFieldVisible(resultadoLabel, resultadoTF, showResultado);
+        setFieldVisible(semillaLabel, semillaCombo, showSemilla);
+        setFieldVisible(tratamientoLabel, tratamientoCombo, showTratamiento);
+        setFieldVisible(dosisLabel, dosisCombo, showTratamiento);
+
+        if (clearHiddenValues) {
+            if (!showResultado) {
+                resultadoTF.setText("");
+            }
+            if (!showSemilla) {
+                clearComboSelection(semillaCombo);
+            }
+            if (!showTratamiento) {
+                clearComboSelection(tratamientoCombo);
+                clearComboSelection(dosisCombo);
+            }
+        }
+
+        revalidate();
+        repaint();
+    }
+
+    private void setFieldVisible(Component label, Component field, boolean visible) {
+        label.setVisible(visible);
+        field.setVisible(visible);
+    }
+
+    private String getSelectedTipoEventoCode() {
+        ComboItem<TipoEvento> tipoEventoItem = getSelectedItem(tipoEventoCombo);
+        TipoEvento tipoEvento = tipoEventoItem == null ? null : tipoEventoItem.getValue();
+        return tipoEvento == null || tipoEvento.getCodigo() == null ? null : tipoEvento.getCodigo().trim();
+    }
+
+    private boolean shouldShowResultado(String codigoTipoEvento) {
+        return equalsCodigo(codigoTipoEvento, CODIGO_DIAGNOSTICO_PRENEZ)
+                || equalsCodigo(codigoTipoEvento, CODIGO_REVISION_VETERINARIO);
+    }
+
+    private boolean shouldShowSemilla(String codigoTipoEvento) {
+        return equalsCodigo(codigoTipoEvento, CODIGO_INSEMINACION_ARTIFICIAL);
+    }
+
+    private boolean shouldShowTratamiento(String codigoTipoEvento) {
+        return equalsCodigo(codigoTipoEvento, CODIGO_TRATAMIENTO);
+    }
+
+    private boolean equalsCodigo(String value, String expected) {
+        return value != null && expected.equalsIgnoreCase(value);
     }
 
     private void configureSecondaryButton(boolean editable) {

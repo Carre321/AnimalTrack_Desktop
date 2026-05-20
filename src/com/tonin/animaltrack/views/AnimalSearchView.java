@@ -199,7 +199,11 @@ public class AnimalSearchView extends AbstractView implements FarmFilterAware {
         criteria.setSexoId(sexoItem == null || sexoItem.getValue() == null ? null : sexoItem.getValue().getId());
         ComboItem<Raza> razaItem = getSelectedItem(razaCB);
         criteria.setRazaId(razaItem == null || razaItem.getValue() == null ? null : razaItem.getValue().getId());
-        criteria.setGranjaId(MainWindow.getInstance().getSelectedGranjaId());
+        Long selectedGranjaId = MainWindow.getInstance().getSelectedGranjaId();
+        criteria.setGranjaId(selectedGranjaId);
+        if (!MainWindow.getInstance().getPermissions().isAdmin() && selectedGranjaId == null) {
+            criteria.setGranjaId(-1L);
+        }
         criteria.setIncludeHistory(historialCB.isSelected());
 
         return criteria;

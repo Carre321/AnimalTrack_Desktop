@@ -24,6 +24,7 @@ import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTextField;
@@ -44,6 +45,7 @@ import com.tonin.animaltrack.model.VeterinarioGranja;
 import com.tonin.animaltrack.model.dto.GanaderoDTO;
 import com.tonin.animaltrack.model.dto.GranjaDTO;
 import com.tonin.animaltrack.model.dto.NotificacionDTO;
+import com.tonin.animaltrack.model.dto.UsuarioLoginDTO;
 import com.tonin.animaltrack.model.dto.VeterinarioDTO;
 import com.tonin.animaltrack.service.AnimalSemillaService;
 import com.tonin.animaltrack.service.DosisService;
@@ -58,6 +60,7 @@ import com.tonin.animaltrack.service.SexoService;
 import com.tonin.animaltrack.service.TipoEventoService;
 import com.tonin.animaltrack.service.TipoNotificacionService;
 import com.tonin.animaltrack.service.TratamientoService;
+import com.tonin.animaltrack.service.UsuarioLoginService;
 import com.tonin.animaltrack.service.VeterinarioGranjaService;
 import com.tonin.animaltrack.service.impl.AnimalSemillaServiceImpl;
 import com.tonin.animaltrack.service.impl.AnimalServiceImpl;
@@ -74,6 +77,7 @@ import com.tonin.animaltrack.service.impl.SexoServiceImpl;
 import com.tonin.animaltrack.service.impl.TipoEventoServiceImpl;
 import com.tonin.animaltrack.service.impl.TipoNotificacionServiceImpl;
 import com.tonin.animaltrack.service.impl.TratamientoServiceImpl;
+import com.tonin.animaltrack.service.impl.UsuarioLoginServiceImpl;
 import com.tonin.animaltrack.service.impl.VeterinarioGranjaServiceImpl;
 import com.tonin.animaltrack.service.impl.VeterinarioServiceImpl;
 import com.tonin.animaltrack.ui.MainWindow;
@@ -101,8 +105,8 @@ public class AdminContainerView extends AbstractView {
         tabs.addTab("Usuarios", new UsuariosPersonasPanel());
         tabs.addTab("Granjas", new CrudPanel<Granja>(
                 "Granjas", new GranjaServiceImpl(), Granja.class,
-                fields("id", "nombre", "direccion", "codigoPostal", "municipioId", "ganaderoId"),
-                labels("ID", "Nombre", "Dirección", "CP", "Municipio", "Ganadero")));
+                fields("id", "rega", "nombre", "direccion", "codigoPostal", "municipioId"),
+                labels("ID", "REGA", "Nombre", "Dirección", "CP", "Municipio")));
         tabs.addTab("Tratamientos", new CrudPanel<Tratamiento>(
                 "Tratamientos", new TratamientoServiceImpl(), Tratamiento.class,
                 fields("id", "nombre"),
@@ -456,6 +460,7 @@ public class AdminContainerView extends AbstractView {
         private final GanaderoService ganaderoService;
         private final com.tonin.animaltrack.service.VeterinarioService veterinarioService;
         private final MunicipioService municipioService;
+        private final UsuarioLoginService usuarioLoginService;
 
         private final JComboBox<String> tipoUsuarioCombo;
         private final JTextField idTF;
@@ -466,6 +471,7 @@ public class AdminContainerView extends AbstractView {
         private final JTextField apellidosTF;
         private final JTextField telefonoTF;
         private final JTextField emailTF;
+        private final JPasswordField passwordPF;
         private final JTextField direccionTF;
         private final JTextField codigoPostalTF;
         private final JComboBox<LookupItem> provinciaCombo;
@@ -479,6 +485,7 @@ public class AdminContainerView extends AbstractView {
             this.ganaderoService = new GanaderoServiceImpl();
             this.veterinarioService = new VeterinarioServiceImpl();
             this.municipioService = new MunicipioServiceImpl();
+            this.usuarioLoginService = new UsuarioLoginServiceImpl();
             this.rows = Collections.emptyList();
 
             setLayout(new BorderLayout(0, 0));
@@ -499,6 +506,7 @@ public class AdminContainerView extends AbstractView {
             apellidosTF = new JTextField(20);
             telefonoTF = new JTextField(20);
             emailTF = new JTextField(20);
+            passwordPF = new JPasswordField(20);
             direccionTF = new JTextField(20);
             codigoPostalTF = new JTextField(20);
             provinciaCombo = new JComboBox<LookupItem>();
@@ -514,6 +522,7 @@ public class AdminContainerView extends AbstractView {
             addField(formPanel, row++, "Apellidos:", apellidosTF);
             addField(formPanel, row++, "Telefono:", telefonoTF);
             addField(formPanel, row++, "Email:", emailTF);
+            addField(formPanel, row++, "Contraseña:", passwordPF);
             addField(formPanel, row++, "Direccion:", direccionTF);
             addField(formPanel, row++, "CP:", codigoPostalTF);
             addField(formPanel, row++, "Provincia:", provinciaCombo);
@@ -672,20 +681,40 @@ public class AdminContainerView extends AbstractView {
         private void save() {
             try {
                 Long id = parseLong(idTF.getText());
+                String password = trimToNull(new String(passwordPF.getPassword()));
+                if (id == null && password == null) {
+                    JOptionPane.showMessageDialog(this, "Introduce una contraseña para la cuenta de acceso.",
+                            "Usuarios", JOptionPane.WARNING_MESSAGE);
+                    passwordPF.requestFocusInWindow();
+                    return;
+                }
+                if (password != null && trimToNull(emailTF.getText()) == null) {
+                    JOptionPane.showMessageDialog(this, "Introduce un email para crear la cuenta de acceso.",
+                            "Usuarios", JOptionPane.WARNING_MESSAGE);
+                    emailTF.requestFocusInWindow();
+                    return;
+                }
+
                 if (isVeterinarioSelected()) {
                     Veterinario veterinario = buildVeterinario();
+                    VeterinarioDTO saved;
                     if (id == null) {
-                        veterinarioService.create(veterinario);
+                        saved = veterinarioService.create(veterinario);
                     } else {
                         veterinarioService.update(veterinario);
+                        saved = veterinarioService.findById(id);
                     }
+                    saveLogin(saved == null ? id : saved.getId(), null, password);
                 } else {
                     Ganadero ganadero = buildGanadero();
+                    GanaderoDTO saved;
                     if (id == null) {
-                        ganaderoService.create(ganadero);
+                        saved = ganaderoService.create(ganadero);
                     } else {
                         ganaderoService.update(ganadero);
+                        saved = ganaderoService.findById(id);
                     }
+                    saveLogin(null, saved == null ? id : saved.getId(), password);
                 }
                 JOptionPane.showMessageDialog(this, "Usuario guardado correctamente.", "Usuarios",
                         JOptionPane.INFORMATION_MESSAGE);
@@ -693,6 +722,29 @@ public class AdminContainerView extends AbstractView {
                 reload();
             } catch (Exception ex) {
                 showError(ex);
+            }
+        }
+
+        private void saveLogin(Long veterinarioId, Long ganaderoId, String password) throws Exception {
+            if (password == null) {
+                return;
+            }
+            String email = trimToNull(emailTF.getText());
+            UsuarioLoginDTO usuario = usuarioLoginService.findByEmail(email);
+            if (usuario == null) {
+                usuario = new UsuarioLoginDTO();
+            }
+            usuario.setEmail(email);
+            usuario.setPasswordHash(password);
+            usuario.setRol(veterinarioId == null ? "GANADERO" : "VETERINARIO");
+            usuario.setGanaderoId(ganaderoId);
+            usuario.setVeterinarioId(veterinarioId);
+            usuario.setActivo(Boolean.TRUE);
+
+            if (usuario.getId() == null) {
+                usuarioLoginService.create(usuario);
+            } else {
+                usuarioLoginService.update(usuario);
             }
         }
 
@@ -818,6 +870,7 @@ public class AdminContainerView extends AbstractView {
             apellidosTF.setText("");
             telefonoTF.setText("");
             emailTF.setText("");
+            passwordPF.setText("");
             direccionTF.setText("");
             codigoPostalTF.setText("");
             clearLookupSelection(provinciaCombo);
@@ -839,6 +892,9 @@ public class AdminContainerView extends AbstractView {
             JTabbedPane tabs = new JTabbedPane();
             tabs.addTab("Veterinario-Granja", new RelationEditorPanel("Veterinario", "Granja",
                     new VeterinarioGranjaServiceImpl(), new VeterinarioServiceImpl(), new GranjaServiceImpl(), true));
+            tabs.addTab("Ganadero-Granja", new RelationEditorPanel("Ganadero", "Granja",
+                    new GranjaServiceImpl(), new GanaderoServiceImpl(), new GranjaServiceImpl(),
+                    RelationEditorPanel.GANADERO_GRANJA));
             tabs.addTab("Animal-Semilla", new RelationEditorPanel("Animal", "Semilla",
                     new AnimalSemillaServiceImpl(), new AnimalServiceImpl(), new SemillaServiceImpl(), false));
             add(tabs, BorderLayout.CENTER);
@@ -848,17 +904,26 @@ public class AdminContainerView extends AbstractView {
     private static class RelationEditorPanel extends JPanel {
 
         private static final long serialVersionUID = 1L;
+        private static final int VETERINARIO_GRANJA = 1;
+        private static final int ANIMAL_SEMILLA = 2;
+        private static final int GANADERO_GRANJA = 3;
 
         private final JComboBox<LookupItem> firstCB;
         private final JComboBox<LookupItem> secondCB;
         private final Object service;
-        private final boolean veterinarioGranja;
+        private final int relationType;
         private final JXTable table;
 
         RelationEditorPanel(String firstLabel, String secondLabel, Object service, Object firstLookupService,
                 Object secondLookupService, boolean veterinarioGranja) {
+            this(firstLabel, secondLabel, service, firstLookupService, secondLookupService,
+                    veterinarioGranja ? VETERINARIO_GRANJA : ANIMAL_SEMILLA);
+        }
+
+        RelationEditorPanel(String firstLabel, String secondLabel, Object service, Object firstLookupService,
+                Object secondLookupService, int relationType) {
             this.service = service;
-            this.veterinarioGranja = veterinarioGranja;
+            this.relationType = relationType;
             setLayout(new BorderLayout(0, 0));
 
             JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 6));
@@ -907,16 +972,23 @@ public class AdminContainerView extends AbstractView {
             try {
                 Long first = selectedId(firstCB);
                 Long second = selectedId(secondCB);
-                if (veterinarioGranja) {
+                if (first == null || second == null) {
+                    JOptionPane.showMessageDialog(this, "Selecciona los dos valores de la relación.", "Relaciones",
+                            JOptionPane.INFORMATION_MESSAGE);
+                    return;
+                }
+                if (relationType == VETERINARIO_GRANJA) {
                     VeterinarioGranja value = new VeterinarioGranja();
                     value.setVeterinarioId(first);
                     value.setGranjaId(second);
                     ((VeterinarioGranjaService) service).create(value);
-                } else {
+                } else if (relationType == ANIMAL_SEMILLA) {
                     AnimalSemilla value = new AnimalSemilla();
                     value.setAnimalId(first);
                     value.setSemillaId(second);
                     ((AnimalSemillaService) service).create(value);
+                } else {
+                    assignGanaderoToGranja(first, second);
                 }
                 reload();
             } catch (Exception ex) {
@@ -931,10 +1003,12 @@ public class AdminContainerView extends AbstractView {
                 if (first == null || second == null || !confirmDelete(this, "ELIMINAR")) {
                     return;
                 }
-                if (veterinarioGranja) {
+                if (relationType == VETERINARIO_GRANJA) {
                     ((VeterinarioGranjaService) service).delete(first, second);
-                } else {
+                } else if (relationType == ANIMAL_SEMILLA) {
                     ((AnimalSemillaService) service).delete(first, second);
+                } else {
+                    assignGanaderoToGranja(null, second);
                 }
                 selectLookupItem(firstCB, null);
                 selectLookupItem(secondCB, null);
@@ -947,13 +1021,34 @@ public class AdminContainerView extends AbstractView {
         private void reload() {
             try {
                 Long first = selectedId(firstCB);
-                List<?> rows = veterinarioGranja
+                List<?> rows = relationType == VETERINARIO_GRANJA
                         ? ((VeterinarioGranjaService) service).findByVeterinarioId(first)
-                        : ((AnimalSemillaService) service).findByAnimalId(first);
+                        : relationType == ANIMAL_SEMILLA
+                                ? ((AnimalSemillaService) service).findByAnimalId(first)
+                                : ((GranjaService) service).findByGanaderoId(first);
                 updateTable(rows == null ? Collections.emptyList() : rows);
             } catch (Exception ex) {
                 showError(ex);
             }
+        }
+
+        private void assignGanaderoToGranja(Long ganaderoId, Long granjaId) throws Exception {
+            if (granjaId == null) {
+                return;
+            }
+            GranjaDTO dto = ((GranjaService) service).findById(granjaId);
+            if (dto == null) {
+                return;
+            }
+            Granja granja = new Granja();
+            granja.setId(dto.getId());
+            granja.setRega(dto.getRega());
+            granja.setNombre(dto.getNombre());
+            granja.setDireccion(dto.getDireccion());
+            granja.setCodigoPostal(dto.getCodigoPostal());
+            granja.setMunicipioId(dto.getMunicipioId());
+            granja.setGanaderoId(ganaderoId);
+            ((GranjaService) service).update(granja);
         }
 
         private void updateTable(List<?> rows) {
@@ -967,6 +1062,10 @@ public class AdminContainerView extends AbstractView {
                     AnimalSemilla value = (AnimalSemilla) row;
                     model.addRow(new Object[] { value.getAnimalId(), displayComboValue(firstCB, value.getAnimalId()),
                             value.getSemillaId(), displayComboValue(secondCB, value.getSemillaId()) });
+                } else if (row instanceof GranjaDTO) {
+                    GranjaDTO value = (GranjaDTO) row;
+                    model.addRow(new Object[] { value.getGanaderoId(), displayComboValue(firstCB, value.getGanaderoId()),
+                            value.getId(), displayComboValue(secondCB, value.getId()) });
                 }
             }
             table.setModel(model);
@@ -1170,6 +1269,13 @@ public class AdminContainerView extends AbstractView {
             return codigo;
         }
         String nombre = stringValue(invoke(row, "getNombre"));
+        String rega = stringValue(invoke(row, "getRega"));
+        if (rega != null && nombre != null) {
+            return rega + " - " + nombre;
+        }
+        if (rega != null) {
+            return rega;
+        }
         if (nombre != null) {
             return nombre;
         }
