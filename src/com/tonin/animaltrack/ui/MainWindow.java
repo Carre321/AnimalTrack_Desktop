@@ -47,6 +47,7 @@ import com.tonin.animaltrack.views.controler.OpenAdminController;
 import com.tonin.animaltrack.views.controler.OpenAnimalSearchController;
 import com.tonin.animaltrack.views.controler.OpenEventoSearchController;
 import com.tonin.animaltrack.views.controler.OpenInicioController;
+import com.tonin.animaltrack.views.controler.OpenSemillaController;
 import com.tonin.animaltrack.views.controler.OpenVeterinarioSearchController;
 
 
@@ -65,6 +66,7 @@ public class MainWindow {
     private JButton inicioButton;
     private JButton animalButton;
     private JButton eventoButton;
+    private JButton semillaButton;
     private JButton veterinarioButton;
     private JButton adminButton;
     private JButton usuarioButton;
@@ -133,9 +135,9 @@ public class MainWindow {
         eastPanel.add(mainMenuPanel, BorderLayout.CENTER);
         GridBagLayout gbl_mainMenuPanel = new GridBagLayout();
         gbl_mainMenuPanel.columnWidths = new int[] { 0, 0 };
-        gbl_mainMenuPanel.rowHeights = new int[] { 0, 0, 0, 0, 0, 0 };
+        gbl_mainMenuPanel.rowHeights = new int[] { 0, 0, 0, 0, 0, 0, 0 };
         gbl_mainMenuPanel.columnWeights = new double[] { 0.0, Double.MIN_VALUE };
-        gbl_mainMenuPanel.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE };
+        gbl_mainMenuPanel.rowWeights = new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE };
         mainMenuPanel.setLayout(gbl_mainMenuPanel);
 
         inicioButton = new JButton("Inicio");
@@ -165,12 +167,21 @@ public class MainWindow {
         gbc_animalButton.gridy = 2;
         mainMenuPanel.add(animalButton, gbc_animalButton);
 
+        semillaButton = new JButton("Semillas");
+        semillaButton.setIcon(new ImageIcon(MainWindow.class.getResource("/animaltrack/icons/32/vaccine.png")));
+        GridBagConstraints gbc_semillaButton = new GridBagConstraints();
+        gbc_semillaButton.fill = GridBagConstraints.HORIZONTAL;
+        gbc_semillaButton.insets = new Insets(0, 0, 5, 0);
+        gbc_semillaButton.gridx = 0;
+        gbc_semillaButton.gridy = 3;
+        mainMenuPanel.add(semillaButton, gbc_semillaButton);
+
         veterinarioButton = new JButton("Veterinario");
         veterinarioButton.setIcon(new ImageIcon(MainWindow.class.getResource("/animaltrack/icons/32/veterinarian.png")));
         GridBagConstraints gbc_veterinarioButton = new GridBagConstraints();
         gbc_veterinarioButton.fill = GridBagConstraints.HORIZONTAL;
         gbc_veterinarioButton.gridx = 0;
-        gbc_veterinarioButton.gridy = 3;
+        gbc_veterinarioButton.gridy = 4;
         mainMenuPanel.add(veterinarioButton, gbc_veterinarioButton);
 
         adminButton = new JButton("Administración");
@@ -179,7 +190,7 @@ public class MainWindow {
         gbc_adminButton.fill = GridBagConstraints.HORIZONTAL;
         gbc_adminButton.insets = new Insets(5, 0, 0, 0);
         gbc_adminButton.gridx = 0;
-        gbc_adminButton.gridy = 4;
+        gbc_adminButton.gridy = 5;
         mainMenuPanel.add(adminButton, gbc_adminButton);
 
         contentPanel = new JPanel();
@@ -240,6 +251,8 @@ public class MainWindow {
         animalButton.addActionListener(animalController);
         OpenEventoSearchController eventoController = new OpenEventoSearchController();
         eventoButton.addActionListener(eventoController);
+        OpenSemillaController semillaController = new OpenSemillaController();
+        semillaButton.addActionListener(semillaController);
         OpenVeterinarioSearchController veterinarioController = new OpenVeterinarioSearchController();
         veterinarioButton.addActionListener(veterinarioController);
         OpenAdminController adminController = new OpenAdminController();
@@ -392,6 +405,7 @@ public class MainWindow {
         inicioButton.setVisible(permissions.canOpenHome());
         animalButton.setVisible(permissions.canOpenAnimals());
         eventoButton.setVisible(permissions.canOpenEvents());
+        semillaButton.setVisible(permissions.canOpenSemillas());
         veterinarioButton.setVisible(permissions.canOpenVeterinarios());
         adminButton.setVisible(permissions.canOpenAdmin());
     }

@@ -473,8 +473,9 @@ public class EventoCreateView extends AbstractView {
         }
         if (value instanceof Semilla) {
             Semilla semilla = (Semilla) value;
-            String descripcion = semilla.getDescripcion() == null ? "" : " - " + semilla.getDescripcion();
-            return semilla.getCodigo() + descripcion;
+            String nombre = semilla.getNombre() == null ? "" : " - " + semilla.getNombre();
+            String raza = semilla.getRazaNombre() == null ? "" : " (" + semilla.getRazaNombre() + ")";
+            return semilla.getCodigo() + nombre + raza;
         }
         if (value instanceof Dosis) {
             Dosis dosis = (Dosis) value;

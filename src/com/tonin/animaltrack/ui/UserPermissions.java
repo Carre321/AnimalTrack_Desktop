@@ -46,6 +46,10 @@ public class UserPermissions {
         return isAdmin();
     }
 
+    public boolean canOpenSemillas() {
+        return isAdmin() || isVeterinario();
+    }
+
     public boolean canOpenAdmin() {
         return isAdmin();
     }

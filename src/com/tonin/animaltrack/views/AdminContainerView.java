@@ -44,7 +44,7 @@ import com.tonin.animaltrack.model.VeterinarioGranja;
 import com.tonin.animaltrack.model.dto.GanaderoDTO;
 import com.tonin.animaltrack.model.dto.GranjaDTO;
 import com.tonin.animaltrack.model.dto.NotificacionDTO;
-import com.tonin.animaltrack.model.dto.UsuarioLoginDTO;
+import com.tonin.animaltrack.model.dto.VeterinarioDTO;
 import com.tonin.animaltrack.service.AnimalSemillaService;
 import com.tonin.animaltrack.service.DosisService;
 import com.tonin.animaltrack.service.GanaderoService;
@@ -74,7 +74,6 @@ import com.tonin.animaltrack.service.impl.SexoServiceImpl;
 import com.tonin.animaltrack.service.impl.TipoEventoServiceImpl;
 import com.tonin.animaltrack.service.impl.TipoNotificacionServiceImpl;
 import com.tonin.animaltrack.service.impl.TratamientoServiceImpl;
-import com.tonin.animaltrack.service.impl.UsuarioLoginServiceImpl;
 import com.tonin.animaltrack.service.impl.VeterinarioGranjaServiceImpl;
 import com.tonin.animaltrack.service.impl.VeterinarioServiceImpl;
 import com.tonin.animaltrack.ui.MainWindow;
@@ -84,10 +83,12 @@ public class AdminContainerView extends AbstractView {
 	private static Logger logger = LogManager.getLogger(AdminContainerView.class.getName());
 
     private static final long serialVersionUID = 1L;
+    private static final String USER_TYPE_GANADERO = "Ganadero";
+    private static final String USER_TYPE_VETERINARIO = "Veterinario";
     private static final String NO_MATCHES_MESSAGE = "No hay coincidencias con el filtro de búsqueda.";
 
     public AdminContainerView() {
-        setName("Administración");
+        setName("Usuarios");
         setLayout(new BorderLayout(0, 0));
         if (!MainWindow.getInstance().getPermissions().canOpenAdmin()) {
             add(new JLabel("No tienes permisos para abrir Administración."), BorderLayout.CENTER);
@@ -97,22 +98,11 @@ public class AdminContainerView extends AbstractView {
         JTabbedPane tabs = new JTabbedPane(JTabbedPane.TOP);
         add(tabs, BorderLayout.CENTER);
 
-        tabs.addTab("Ganaderos", new CrudPanel<Ganadero>(
-                "Ganaderos", new GanaderoServiceImpl(), Ganadero.class,
-                fields("id", "dni", "nombre", "apellidos", "telefono", "email", "direccion", "codigoPostal", "municipioId"),
-                labels("ID", "DNI", "Nombre", "Apellidos", "Teléfono", "Email", "Dirección", "CP", "Municipio")));
-        tabs.addTab("Veterinarios", new CrudPanel<Veterinario>(
-                "Veterinarios", new VeterinarioServiceImpl(), Veterinario.class,
-                fields("id", "codigo", "dni", "nombre", "apellidos", "telefono", "email", "direccion", "codigoPostal", "municipioId"),
-                labels("ID", "Código", "DNI", "Nombre", "Apellidos", "Teléfono", "Email", "Dirección", "CP", "Municipio")));
+        tabs.addTab("Usuarios", new UsuariosPersonasPanel());
         tabs.addTab("Granjas", new CrudPanel<Granja>(
                 "Granjas", new GranjaServiceImpl(), Granja.class,
                 fields("id", "nombre", "direccion", "codigoPostal", "municipioId", "ganaderoId"),
                 labels("ID", "Nombre", "Dirección", "CP", "Municipio", "Ganadero")));
-        tabs.addTab("Semillas", new CrudPanel<Semilla>(
-                "Semillas", new SemillaServiceImpl(), Semilla.class,
-                fields("id", "codigo", "descripcion"),
-                labels("ID", "Código", "Descripción")));
         tabs.addTab("Tratamientos", new CrudPanel<Tratamiento>(
                 "Tratamientos", new TratamientoServiceImpl(), Tratamiento.class,
                 fields("id", "nombre"),
@@ -125,10 +115,6 @@ public class AdminContainerView extends AbstractView {
                 "Notificaciones", new NotificacionServiceImpl(), Notificacion.class,
                 fields("id", "eventoId", "tipo", "fechaEmision", "descripcion", "tipoNotificacionId"),
                 labels("ID", "Evento", "Tipo", "Fecha emisión", "Descripción", "Tipo notif.")));
-        tabs.addTab("Usuarios", new CrudPanel<UsuarioLoginDTO>(
-                "Usuarios", new UsuarioLoginServiceImpl(), UsuarioLoginDTO.class,
-                fields("id", "email", "passwordHash", "rol", "ganaderoId", "veterinarioId", "activo"),
-                labels("ID", "Email", "Password/Hash", "Rol", "Ganadero", "Veterinario", "Activo")));
         tabs.addTab("Relaciones", new RelationsPanel());
         tabs.addTab("Maestras", new MastersPanel());
     }
@@ -463,6 +449,387 @@ public class AdminContainerView extends AbstractView {
         }
     }
 
+    private static class UsuariosPersonasPanel extends JPanel {
+
+        private static final long serialVersionUID = 1L;
+
+        private final GanaderoService ganaderoService;
+        private final com.tonin.animaltrack.service.VeterinarioService veterinarioService;
+        private final MunicipioService municipioService;
+
+        private final JComboBox<String> tipoUsuarioCombo;
+        private final JTextField idTF;
+        private final JLabel codigoLabel;
+        private final JTextField codigoTF;
+        private final JTextField dniTF;
+        private final JTextField nombreTF;
+        private final JTextField apellidosTF;
+        private final JTextField telefonoTF;
+        private final JTextField emailTF;
+        private final JTextField direccionTF;
+        private final JTextField codigoPostalTF;
+        private final JComboBox<LookupItem> provinciaCombo;
+        private final JComboBox<LookupItem> municipioCombo;
+        private final JXSearchField filterTF;
+        private final JXTable table;
+
+        private List<Object> rows;
+
+        UsuariosPersonasPanel() {
+            this.ganaderoService = new GanaderoServiceImpl();
+            this.veterinarioService = new VeterinarioServiceImpl();
+            this.municipioService = new MunicipioServiceImpl();
+            this.rows = Collections.emptyList();
+
+            setLayout(new BorderLayout(0, 0));
+
+            JPanel formPanel = new JPanel(new GridBagLayout());
+            add(formPanel, BorderLayout.NORTH);
+
+            tipoUsuarioCombo = new JComboBox<String>();
+            tipoUsuarioCombo.setModel(new DefaultComboBoxModel<String>(
+                    new String[] { USER_TYPE_VETERINARIO, USER_TYPE_GANADERO }));
+            idTF = new JTextField(20);
+            idTF.setEditable(false);
+            idTF.setVisible(false);
+            codigoLabel = new JLabel("Codigo:");
+            codigoTF = new JTextField(20);
+            dniTF = new JTextField(20);
+            nombreTF = new JTextField(20);
+            apellidosTF = new JTextField(20);
+            telefonoTF = new JTextField(20);
+            emailTF = new JTextField(20);
+            direccionTF = new JTextField(20);
+            codigoPostalTF = new JTextField(20);
+            provinciaCombo = new JComboBox<LookupItem>();
+            municipioCombo = new JComboBox<LookupItem>();
+            FilterableComboBoxSupport.decorate(provinciaCombo);
+            FilterableComboBoxSupport.decorate(municipioCombo);
+
+            int row = 0;
+            addField(formPanel, row++, "Tipo:", tipoUsuarioCombo);
+            addField(formPanel, row++, codigoLabel, codigoTF);
+            addField(formPanel, row++, "DNI:", dniTF);
+            addField(formPanel, row++, "Nombre:", nombreTF);
+            addField(formPanel, row++, "Apellidos:", apellidosTF);
+            addField(formPanel, row++, "Telefono:", telefonoTF);
+            addField(formPanel, row++, "Email:", emailTF);
+            addField(formPanel, row++, "Direccion:", direccionTF);
+            addField(formPanel, row++, "CP:", codigoPostalTF);
+            addField(formPanel, row++, "Provincia:", provinciaCombo);
+            addField(formPanel, row++, "Municipio:", municipioCombo);
+
+            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 6));
+            add(buttonPanel, BorderLayout.SOUTH);
+
+            JButton nuevoButton = new JButton("Nuevo", icon("/animaltrack/icons/32/add-new.png"));
+            nuevoButton.addActionListener(e -> clearForm());
+            buttonPanel.add(nuevoButton);
+
+            JButton guardarButton = new JButton("Guardar", icon("/animaltrack/icons/32/save.png"));
+            guardarButton.addActionListener(e -> save());
+            buttonPanel.add(guardarButton);
+
+            JButton borrarButton = new JButton("Borrar", icon("/animaltrack/icons/32/delete.png"));
+            borrarButton.addActionListener(e -> deleteSelected());
+            buttonPanel.add(borrarButton);
+
+            JButton recargarButton = new JButton("Recargar", icon("/animaltrack/icons/32/refresh.png"));
+            recargarButton.addActionListener(e -> reload());
+            buttonPanel.add(recargarButton);
+
+            filterTF = new JXSearchField("Filtrar usuarios");
+            filterTF.setColumns(22);
+            filterTF.addActionListener(e -> updateTable());
+            filterTF.addCaretListener(e -> updateTable());
+            buttonPanel.add(filterTF);
+
+            table = new JXTable();
+            table.setColumnControlVisible(true);
+            table.setSortable(true);
+            table.addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override
+                public void mouseClicked(java.awt.event.MouseEvent e) {
+                    if (e.getClickCount() == 2) {
+                        loadSelectedIntoForm();
+                    }
+                }
+            });
+            add(new JScrollPane(table), BorderLayout.CENTER);
+
+            provinciaCombo.setModel(new DefaultComboBoxModel<LookupItem>(lookupItems(new ProvinciaServiceImpl(), false)));
+            clearLookupSelection(provinciaCombo);
+            provinciaCombo.addActionListener(e -> reloadMunicipios());
+            tipoUsuarioCombo.addActionListener(e -> {
+                clearForm();
+                updateVisibleFields();
+                reload();
+            });
+
+            updateVisibleFields();
+            reloadMunicipios();
+            reload();
+        }
+
+        private boolean isVeterinarioSelected() {
+            return USER_TYPE_VETERINARIO.equals(tipoUsuarioCombo.getSelectedItem());
+        }
+
+        private void updateVisibleFields() {
+            boolean showCodigo = isVeterinarioSelected();
+            codigoLabel.setVisible(showCodigo);
+            codigoTF.setVisible(showCodigo);
+            revalidate();
+            repaint();
+        }
+
+        private void reloadMunicipios() {
+            try {
+                Long provinciaId = selectedId(provinciaCombo);
+                if (provinciaId == null) {
+                    municipioCombo.setModel(new DefaultComboBoxModel<LookupItem>());
+                    clearLookupSelection(municipioCombo);
+                    return;
+                }
+                List<?> municipios = municipioService.findByProvinciaId(provinciaId);
+                List<LookupItem> items = new ArrayList<LookupItem>();
+                for (Object municipio : municipios) {
+                    Object id = invoke(municipio, "getId");
+                    if (id != null) {
+                        String value = String.valueOf(id);
+                        items.add(new LookupItem((Long) convert(value, Long.class), value, describe(municipio)));
+                    }
+                }
+                municipioCombo.setModel(new DefaultComboBoxModel<LookupItem>(items.toArray(new LookupItem[items.size()])));
+                clearLookupSelection(municipioCombo);
+            } catch (Exception ex) {
+                showError(ex);
+            }
+        }
+
+        private void reload() {
+            try {
+                rows = isVeterinarioSelected()
+                        ? new ArrayList<Object>(veterinarioService.findAll())
+                        : new ArrayList<Object>(ganaderoService.findAll());
+                updateTable();
+            } catch (Exception ex) {
+                showError(ex);
+            }
+        }
+
+        private void updateTable() {
+            String filter = normalize(filterTF.getText());
+            DefaultTableModel model = new DefaultTableModel(
+                    new Object[] { "ID", "Tipo", "Codigo", "DNI", "Nombre", "Apellidos", "Telefono", "Email",
+                            "Direccion", "CP", "Provincia", "Municipio" },
+                    0) {
+                private static final long serialVersionUID = 1L;
+
+                @Override
+                public boolean isCellEditable(int row, int column) {
+                    return false;
+                }
+            };
+
+            for (Object value : rows) {
+                Object[] tableRow = buildTableRow(value);
+                StringBuilder searchable = new StringBuilder();
+                for (Object column : tableRow) {
+                    searchable.append(column).append(' ');
+                }
+                if (filter == null || normalize(searchable.toString()).contains(filter)) {
+                    model.addRow(tableRow);
+                }
+            }
+            if (filter != null && model.getRowCount() == 0) {
+                Object[] empty = new Object[12];
+                empty[3] = NO_MATCHES_MESSAGE;
+                model.addRow(empty);
+            }
+            table.setModel(model);
+            table.getColumnExt("ID").setVisible(false);
+            table.getColumnExt("Tipo").setVisible(false);
+        }
+
+        private Object[] buildTableRow(Object value) {
+            return new Object[] {
+                    invoke(value, "getId"),
+                    value instanceof VeterinarioDTO ? USER_TYPE_VETERINARIO : USER_TYPE_GANADERO,
+                    invoke(value, "getCodigo"),
+                    invoke(value, "getDni"),
+                    invoke(value, "getNombre"),
+                    invoke(value, "getApellidos"),
+                    invoke(value, "getTelefono"),
+                    invoke(value, "getEmail"),
+                    invoke(value, "getDireccion"),
+                    invoke(value, "getCodigoPostal"),
+                    invoke(value, "getProvinciaNombre"),
+                    invoke(value, "getMunicipioNombre")
+            };
+        }
+
+        private void save() {
+            try {
+                Long id = parseLong(idTF.getText());
+                if (isVeterinarioSelected()) {
+                    Veterinario veterinario = buildVeterinario();
+                    if (id == null) {
+                        veterinarioService.create(veterinario);
+                    } else {
+                        veterinarioService.update(veterinario);
+                    }
+                } else {
+                    Ganadero ganadero = buildGanadero();
+                    if (id == null) {
+                        ganaderoService.create(ganadero);
+                    } else {
+                        ganaderoService.update(ganadero);
+                    }
+                }
+                JOptionPane.showMessageDialog(this, "Usuario guardado correctamente.", "Usuarios",
+                        JOptionPane.INFORMATION_MESSAGE);
+                clearForm();
+                reload();
+            } catch (Exception ex) {
+                showError(ex);
+            }
+        }
+
+        private Veterinario buildVeterinario() {
+            Veterinario veterinario = new Veterinario();
+            veterinario.setId(parseLong(idTF.getText()));
+            veterinario.setCodigo(trimToNull(codigoTF.getText()));
+            veterinario.setDni(trimToNull(dniTF.getText()));
+            veterinario.setNombre(trimToNull(nombreTF.getText()));
+            veterinario.setApellidos(trimToNull(apellidosTF.getText()));
+            veterinario.setTelefono(trimToNull(telefonoTF.getText()));
+            veterinario.setEmail(trimToNull(emailTF.getText()));
+            veterinario.setDireccion(trimToNull(direccionTF.getText()));
+            veterinario.setCodigoPostal(trimToNull(codigoPostalTF.getText()));
+            veterinario.setMunicipioId(selectedId(municipioCombo));
+            return veterinario;
+        }
+
+        private Ganadero buildGanadero() {
+            Ganadero ganadero = new Ganadero();
+            ganadero.setId(parseLong(idTF.getText()));
+            ganadero.setDni(trimToNull(dniTF.getText()));
+            ganadero.setNombre(trimToNull(nombreTF.getText()));
+            ganadero.setApellidos(trimToNull(apellidosTF.getText()));
+            ganadero.setTelefono(trimToNull(telefonoTF.getText()));
+            ganadero.setEmail(trimToNull(emailTF.getText()));
+            ganadero.setDireccion(trimToNull(direccionTF.getText()));
+            ganadero.setCodigoPostal(trimToNull(codigoPostalTF.getText()));
+            ganadero.setMunicipioId(selectedId(municipioCombo));
+            return ganadero;
+        }
+
+        private void loadSelectedIntoForm() {
+            int row = table.getSelectedRow();
+            if (row == -1) {
+                return;
+            }
+            int modelRow = table.convertRowIndexToModel(row);
+            Long id = parseLong(String.valueOf(table.getModel().getValueAt(modelRow, 0)));
+            String tipo = String.valueOf(table.getModel().getValueAt(modelRow, 1));
+            if (id == null) {
+                return;
+            }
+            try {
+                if (USER_TYPE_VETERINARIO.equals(tipo)) {
+                    tipoUsuarioCombo.setSelectedItem(USER_TYPE_VETERINARIO);
+                    loadVeterinario(veterinarioService.findById(id));
+                } else {
+                    tipoUsuarioCombo.setSelectedItem(USER_TYPE_GANADERO);
+                    loadGanadero(ganaderoService.findById(id));
+                }
+            } catch (Exception ex) {
+                showError(ex);
+            }
+        }
+
+        private void loadVeterinario(VeterinarioDTO veterinario) {
+            if (veterinario == null) {
+                return;
+            }
+            idTF.setText(String.valueOf(veterinario.getId()));
+            codigoTF.setText(defaultString(veterinario.getCodigo()));
+            fillCommonFields(veterinario.getDni(), veterinario.getNombre(), veterinario.getApellidos(),
+                    veterinario.getTelefono(), veterinario.getEmail(), veterinario.getDireccion(),
+                    veterinario.getCodigoPostal(), veterinario.getProvinciaId(), veterinario.getMunicipioId());
+        }
+
+        private void loadGanadero(GanaderoDTO ganadero) {
+            if (ganadero == null) {
+                return;
+            }
+            idTF.setText(String.valueOf(ganadero.getId()));
+            codigoTF.setText("");
+            fillCommonFields(ganadero.getDni(), ganadero.getNombre(), ganadero.getApellidos(), ganadero.getTelefono(),
+                    ganadero.getEmail(), ganadero.getDireccion(), ganadero.getCodigoPostal(), ganadero.getProvinciaId(),
+                    ganadero.getMunicipioId());
+        }
+
+        private void fillCommonFields(String dni, String nombre, String apellidos, String telefono, String email,
+                String direccion, String codigoPostal, Long provinciaId, Long municipioId) {
+            dniTF.setText(defaultString(dni));
+            nombreTF.setText(defaultString(nombre));
+            apellidosTF.setText(defaultString(apellidos));
+            telefonoTF.setText(defaultString(telefono));
+            emailTF.setText(defaultString(email));
+            direccionTF.setText(defaultString(direccion));
+            codigoPostalTF.setText(defaultString(codigoPostal));
+            selectLookupItem(provinciaCombo, provinciaId == null ? null : String.valueOf(provinciaId));
+            reloadMunicipios();
+            selectLookupItem(municipioCombo, municipioId == null ? null : String.valueOf(municipioId));
+            updateVisibleFields();
+        }
+
+        private void deleteSelected() {
+            Long id = parseLong(idTF.getText());
+            if (id == null) {
+                JOptionPane.showMessageDialog(this, "Carga primero un usuario con doble click.", "Usuarios",
+                        JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+            String description = trimToNull(nombreTF.getText() + " " + apellidosTF.getText());
+            if (!confirmDelete(this, description == null ? "ELIMINAR" : description)) {
+                return;
+            }
+            try {
+                if (isVeterinarioSelected()) {
+                    veterinarioService.delete(id);
+                } else {
+                    ganaderoService.delete(id);
+                }
+                clearForm();
+                reload();
+            } catch (Exception ex) {
+                showError(ex);
+            }
+        }
+
+        private void clearForm() {
+            idTF.setText("");
+            codigoTF.setText("");
+            dniTF.setText("");
+            nombreTF.setText("");
+            apellidosTF.setText("");
+            telefonoTF.setText("");
+            emailTF.setText("");
+            direccionTF.setText("");
+            codigoPostalTF.setText("");
+            clearLookupSelection(provinciaCombo);
+            reloadMunicipios();
+            updateVisibleFields();
+        }
+
+        private String defaultString(String value) {
+            return value == null ? "" : value;
+        }
+    }
+
     private static class RelationsPanel extends JPanel {
 
         private static final long serialVersionUID = 1L;
@@ -672,13 +1039,17 @@ public class AdminContainerView extends AbstractView {
     }
 
     private static void addField(JPanel panel, int row, String label, Component component) {
+        addField(panel, row, new JLabel(label), component);
+    }
+
+    private static void addField(JPanel panel, int row, Component labelComponent, Component component) {
         GridBagConstraints labelConstraints = new GridBagConstraints();
         labelConstraints.gridx = 0;
         labelConstraints.gridy = row;
         labelConstraints.weightx = 0;
         labelConstraints.insets = new Insets(4, 6, 4, 6);
         labelConstraints.anchor = GridBagConstraints.WEST;
-        panel.add(new JLabel(label), labelConstraints);
+        panel.add(labelComponent, labelConstraints);
 
         GridBagConstraints fieldConstraints = new GridBagConstraints();
         fieldConstraints.gridx = 1;
