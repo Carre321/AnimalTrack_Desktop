@@ -67,7 +67,6 @@ public class DashboardGanaderoView extends AbstractView implements FarmFilterAwa
     private final JLabel proximasLabel;
     private final JLabel granjaLabel;
     private final JLabel titleLabel;
-    private final JLabel subtitleLabel;
     private final JLabel tableTitle;
     private final JXTable table;
 
@@ -81,7 +80,6 @@ public class DashboardGanaderoView extends AbstractView implements FarmFilterAwa
         this.proximasLabel = new JLabel("0");
         this.granjaLabel = new JLabel();
         this.titleLabel = new JLabel();
-        this.subtitleLabel = new JLabel();
         this.tableTitle = new JLabel();
         this.table = new DashboardTable();
         initialize();
@@ -98,17 +96,13 @@ public class DashboardGanaderoView extends AbstractView implements FarmFilterAwa
         rootPanel.setBorder(BorderFactory.createEmptyBorder(18, 18, 18, 18));
         add(rootPanel, BorderLayout.CENTER);
 
-        JPanel headerPanel = new JPanel(new BorderLayout(0, 4));
+        JPanel headerPanel = new JPanel(new BorderLayout());
         headerPanel.setOpaque(false);
 
         titleLabel.setText("Vacas próximas a cumplir preñez");
         titleLabel.setFont(titleLabel.getFont().deriveFont(Font.BOLD, 22f));
         titleLabel.setForeground(TOTAL_COLOR);
         headerPanel.add(titleLabel, BorderLayout.NORTH);
-
-        subtitleLabel.setText("Última inseminación + revisión/diagnóstico positivo, sin parto ni aborto después.");
-        subtitleLabel.setForeground(new Color(86, 99, 105));
-        headerPanel.add(subtitleLabel, BorderLayout.CENTER);
 
         JButton refreshButton = new JButton("Actualizar");
         refreshButton.setIcon(new ImageIcon(DashboardGanaderoView.class.getResource("/animaltrack/icons/32/refresh.png")));
@@ -301,7 +295,6 @@ public class DashboardGanaderoView extends AbstractView implements FarmFilterAwa
         if (farmListMode) {
             int granjas = MainWindow.getInstance().getAvailableGranjas().size();
             titleLabel.setText("Granjas asociadas");
-            subtitleLabel.setText("Selecciona una granja en el desplegable superior para ver animales y eventos.");
             tableTitle.setText("Granjas disponibles");
             totalLabel.setText(String.valueOf(granjas));
             mientenLabel.setText("0");
@@ -311,7 +304,6 @@ public class DashboardGanaderoView extends AbstractView implements FarmFilterAwa
         }
 
         titleLabel.setText("Vacas próximas a cumplir preñez");
-        subtitleLabel.setText("Última inseminación + revisión/diagnóstico positivo, sin parto ni aborto después.");
         tableTitle.setText("Seguimiento reproductivo");
 
         int mienten = 0;
