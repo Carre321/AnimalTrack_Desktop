@@ -139,12 +139,12 @@ public class AnimalCreateView extends AbstractView {
         FilterableComboBoxSupport.decorate(padreInternoCombo);
 
         addField(formPanel, row++, "Nombre:", nombreTF);
-        addField(formPanel, row++, "Crotal:", crotalTF);
+        addField(formPanel, row++, "Crotal *:", crotalTF);
         addField(formPanel, row++, "Fecha nac. (yyyy-MM-dd):", fechaNacimientoTF);
         fechaBajaLabel = new JLabel("Fecha baja (yyyy-MM-dd):");
         addField(formPanel, row++, fechaBajaLabel, fechaBajaTF);
-        addField(formPanel, row++, "Granja:", granjaCombo);
-        addField(formPanel, row++, "Sexo:", sexoCombo);
+        addField(formPanel, row++, "Granja *:", granjaCombo);
+        addField(formPanel, row++, "Sexo *:", sexoCombo);
         addField(formPanel, row++, "Raza:", razaCombo);
         addField(formPanel, row++, "Madre interna:", madreInternaCombo);
         addField(formPanel, row++, "Madre externa:", madreExternaTF);

@@ -34,49 +34,29 @@ import org.jdesktop.swingx.JXSearchField;
 import org.jdesktop.swingx.JXTable;
 
 import com.tonin.animaltrack.model.AnimalSemilla;
-import com.tonin.animaltrack.model.Dosis;
 import com.tonin.animaltrack.model.Ganadero;
 import com.tonin.animaltrack.model.Granja;
-import com.tonin.animaltrack.model.Notificacion;
 import com.tonin.animaltrack.model.Semilla;
-import com.tonin.animaltrack.model.Tratamiento;
 import com.tonin.animaltrack.model.Veterinario;
 import com.tonin.animaltrack.model.VeterinarioGranja;
 import com.tonin.animaltrack.model.dto.GanaderoDTO;
 import com.tonin.animaltrack.model.dto.GranjaDTO;
-import com.tonin.animaltrack.model.dto.NotificacionDTO;
 import com.tonin.animaltrack.model.dto.UsuarioLoginDTO;
 import com.tonin.animaltrack.model.dto.VeterinarioDTO;
 import com.tonin.animaltrack.service.AnimalSemillaService;
-import com.tonin.animaltrack.service.DosisService;
 import com.tonin.animaltrack.service.GanaderoService;
 import com.tonin.animaltrack.service.GranjaService;
 import com.tonin.animaltrack.service.MunicipioService;
-import com.tonin.animaltrack.service.NotificacionService;
-import com.tonin.animaltrack.service.ProvinciaService;
-import com.tonin.animaltrack.service.RazaService;
 import com.tonin.animaltrack.service.SemillaService;
-import com.tonin.animaltrack.service.SexoService;
-import com.tonin.animaltrack.service.TipoEventoService;
-import com.tonin.animaltrack.service.TipoNotificacionService;
-import com.tonin.animaltrack.service.TratamientoService;
 import com.tonin.animaltrack.service.UsuarioLoginService;
 import com.tonin.animaltrack.service.VeterinarioGranjaService;
 import com.tonin.animaltrack.service.impl.AnimalSemillaServiceImpl;
 import com.tonin.animaltrack.service.impl.AnimalServiceImpl;
-import com.tonin.animaltrack.service.impl.DosisServiceImpl;
-import com.tonin.animaltrack.service.impl.EventoServiceImpl;
 import com.tonin.animaltrack.service.impl.GanaderoServiceImpl;
 import com.tonin.animaltrack.service.impl.GranjaServiceImpl;
 import com.tonin.animaltrack.service.impl.MunicipioServiceImpl;
-import com.tonin.animaltrack.service.impl.NotificacionServiceImpl;
 import com.tonin.animaltrack.service.impl.ProvinciaServiceImpl;
-import com.tonin.animaltrack.service.impl.RazaServiceImpl;
 import com.tonin.animaltrack.service.impl.SemillaServiceImpl;
-import com.tonin.animaltrack.service.impl.SexoServiceImpl;
-import com.tonin.animaltrack.service.impl.TipoEventoServiceImpl;
-import com.tonin.animaltrack.service.impl.TipoNotificacionServiceImpl;
-import com.tonin.animaltrack.service.impl.TratamientoServiceImpl;
 import com.tonin.animaltrack.service.impl.UsuarioLoginServiceImpl;
 import com.tonin.animaltrack.service.impl.VeterinarioGranjaServiceImpl;
 import com.tonin.animaltrack.service.impl.VeterinarioServiceImpl;
@@ -107,20 +87,7 @@ public class AdminContainerView extends AbstractView {
                 "Granjas", new GranjaServiceImpl(), Granja.class,
                 fields("id", "rega", "nombre", "direccion", "codigoPostal", "municipioId"),
                 labels("ID", "REGA", "Nombre", "Dirección", "CP", "Municipio")));
-        tabs.addTab("Tratamientos", new CrudPanel<Tratamiento>(
-                "Tratamientos", new TratamientoServiceImpl(), Tratamiento.class,
-                fields("id", "nombre"),
-                labels("ID", "Nombre")));
-        tabs.addTab("Dosis", new CrudPanel<Dosis>(
-                "Dosis", new DosisServiceImpl(), Dosis.class,
-                fields("id", "plazoSiguiente", "numOrdenDosis", "tratamientoId"),
-                labels("ID", "Plazo siguiente", "Orden dosis", "Tratamiento")));
-        tabs.addTab("Notificaciones", new CrudPanel<Notificacion>(
-                "Notificaciones", new NotificacionServiceImpl(), Notificacion.class,
-                fields("id", "eventoId", "tipo", "fechaEmision", "descripcion", "tipoNotificacionId"),
-                labels("ID", "Evento", "Tipo", "Fecha emisión", "Descripción", "Tipo notif.")));
         tabs.addTab("Relaciones", new RelationsPanel());
-        tabs.addTab("Maestras", new MastersPanel());
     }
 
     private static List<String> fields(String... values) {
@@ -162,7 +129,7 @@ public class AdminContainerView extends AbstractView {
                 JComponent input = createEditor(fields.get(i));
                 inputs.add(input);
                 if (!"id".equals(fields.get(i))) {
-                    addField(formPanel, visibleRow++, labels.get(i) + ":", input);
+                    addField(formPanel, visibleRow++, requiredFormLabel(title, fields.get(i), labels.get(i)), input);
                 }
             }
 
@@ -204,6 +171,13 @@ public class AdminContainerView extends AbstractView {
             });
             add(new JScrollPane(table), BorderLayout.CENTER);
             reload();
+        }
+
+        private String requiredFormLabel(String title, String field, String label) {
+            boolean required = "Granjas".equals(title)
+                    && ("rega".equals(field) || "nombre".equals(field) || "direccion".equals(field)
+                            || "municipioId".equals(field));
+            return label + (required ? " *:" : ":");
         }
 
         private void reload() {
@@ -499,7 +473,7 @@ public class AdminContainerView extends AbstractView {
             idTF = new JTextField(20);
             idTF.setEditable(false);
             idTF.setVisible(false);
-            codigoLabel = new JLabel("Codigo:");
+            codigoLabel = new JLabel("Codigo *:");
             codigoTF = new JTextField(20);
             dniTF = new JTextField(20);
             nombreTF = new JTextField(20);
@@ -515,18 +489,18 @@ public class AdminContainerView extends AbstractView {
             FilterableComboBoxSupport.decorate(municipioCombo);
 
             int row = 0;
-            addField(formPanel, row++, "Tipo:", tipoUsuarioCombo);
+            addField(formPanel, row++, "Tipo *:", tipoUsuarioCombo);
             addField(formPanel, row++, codigoLabel, codigoTF);
-            addField(formPanel, row++, "DNI:", dniTF);
-            addField(formPanel, row++, "Nombre:", nombreTF);
+            addField(formPanel, row++, "DNI *:", dniTF);
+            addField(formPanel, row++, "Nombre *:", nombreTF);
             addField(formPanel, row++, "Apellidos:", apellidosTF);
             addField(formPanel, row++, "Telefono:", telefonoTF);
-            addField(formPanel, row++, "Email:", emailTF);
-            addField(formPanel, row++, "Contraseña:", passwordPF);
+            addField(formPanel, row++, "Email *:", emailTF);
+            addField(formPanel, row++, "Contraseña *:", passwordPF);
             addField(formPanel, row++, "Direccion:", direccionTF);
             addField(formPanel, row++, "CP:", codigoPostalTF);
-            addField(formPanel, row++, "Provincia:", provinciaCombo);
-            addField(formPanel, row++, "Municipio:", municipioCombo);
+            addField(formPanel, row++, "Provincia *:", provinciaCombo);
+            addField(formPanel, row++, "Municipio *:", municipioCombo);
 
             JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 6));
             add(buttonPanel, BorderLayout.SOUTH);
@@ -659,6 +633,7 @@ public class AdminContainerView extends AbstractView {
             table.setModel(model);
             table.getColumnExt("ID").setVisible(false);
             table.getColumnExt("Tipo").setVisible(false);
+            table.getColumnExt("Codigo").setVisible(isVeterinarioSelected());
         }
 
         private Object[] buildTableRow(Object value) {
@@ -936,9 +911,9 @@ public class AdminContainerView extends AbstractView {
             FilterableComboBoxSupport.decorate(secondCB);
             clearLookupSelection(firstCB);
             clearLookupSelection(secondCB);
-            top.add(new JLabel(firstLabel + ":"));
+            top.add(new JLabel(firstLabel + " *:"));
             top.add(firstCB);
-            top.add(new JLabel(secondLabel + ":"));
+            top.add(new JLabel(secondLabel + " *:"));
             top.add(secondCB);
 
             JButton guardarButton = new JButton("Guardar", icon("/animaltrack/icons/32/save.png"));
@@ -1074,69 +1049,6 @@ public class AdminContainerView extends AbstractView {
         }
     }
 
-    private static class MastersPanel extends JPanel {
-
-        private static final long serialVersionUID = 1L;
-
-        MastersPanel() {
-            setLayout(new BorderLayout(0, 0));
-            JComboBox<ComboItem> selector = new JComboBox<ComboItem>();
-            selector.setModel(new DefaultComboBoxModel<ComboItem>(new ComboItem[] {
-                    new ComboItem("Razas", new RazaServiceImpl()),
-                    new ComboItem("Sexos", new SexoServiceImpl()),
-                    new ComboItem("Tipos evento", new TipoEventoServiceImpl()),
-                    new ComboItem("Tipos notificación", new TipoNotificacionServiceImpl()),
-                    new ComboItem("Provincias", new ProvinciaServiceImpl()),
-                    new ComboItem("Municipios", new MunicipioServiceImpl())
-            }));
-            FilterableComboBoxSupport.decorate(selector);
-            add(selector, BorderLayout.NORTH);
-
-            JXTable table = new JXTable();
-            table.setColumnControlVisible(true);
-            table.setSortable(true);
-            add(new JScrollPane(table), BorderLayout.CENTER);
-
-            Runnable reload = () -> {
-                ComboItem item = (ComboItem) FilterableComboBoxSupport.getSelectedItem(selector);
-                if (item == null) {
-                    return;
-                }
-                try {
-                    List<?> rows = (List<?>) item.service.getClass().getMethod("findAll").invoke(item.service);
-                    DefaultTableModel model = new DefaultTableModel(new Object[] { "ID", "Nombre", "Extra" }, 0);
-                    for (Object row : rows) {
-                        Object extra = invoke(row, "getCodigo");
-                        if (extra == null) {
-                            extra = invoke(row, "getProvinciaId");
-                        }
-                        model.addRow(new Object[] { invoke(row, "getId"), invoke(row, "getNombre"), extra });
-                    }
-                    table.setModel(model);
-                } catch (Exception ex) {
-                    showError(ex);
-                }
-            };
-            selector.addActionListener(e -> reload.run());
-            reload.run();
-        }
-
-        private static class ComboItem {
-            private final String label;
-            private final Object service;
-
-            ComboItem(String label, Object service) {
-                this.label = label;
-                this.service = service;
-            }
-
-            @Override
-            public String toString() {
-                return label;
-            }
-        }
-    }
-
     private static void addField(JPanel panel, int row, String label, Component component) {
         addField(panel, row, new JLabel(label), component);
     }
@@ -1172,15 +1084,6 @@ public class AdminContainerView extends AbstractView {
         }
         if ("veterinarioId".equals(field)) {
             return new VeterinarioServiceImpl();
-        }
-        if ("tratamientoId".equals(field)) {
-            return new TratamientoServiceImpl();
-        }
-        if ("tipoNotificacionId".equals(field)) {
-            return new TipoNotificacionServiceImpl();
-        }
-        if ("eventoId".equals(field)) {
-            return new EventoServiceImpl();
         }
         if ("animalId".equals(field)) {
             return new AnimalServiceImpl();

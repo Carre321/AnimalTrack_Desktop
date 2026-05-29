@@ -1,6 +1,7 @@
 package com.tonin.animaltrack.views;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
@@ -93,37 +94,41 @@ public class EventoSearchView extends AbstractView implements FarmFilterAware {
 
         animalNombreTF = new JXSearchField("Animal");
         buscarPanel.add(animalNombreTF);
-        animalNombreTF.setColumns(14);
+        animalNombreTF.setColumns(11);
 
         JLabel lblCrotal = new JLabel("Crotal:");
         buscarPanel.add(lblCrotal);
 
         animalIdTF = new JXSearchField("Crotal");
         buscarPanel.add(animalIdTF);
-        animalIdTF.setColumns(10);
+        animalIdTF.setColumns(8);
 
         JLabel lblTipoEvento = new JLabel("Tipo Evento:");
         buscarPanel.add(lblTipoEvento);
 
         tipoEventoCombo = new JComboBox<ComboItem<TipoEvento>>();
+        setFixedComboWidth(tipoEventoCombo, 180);
         buscarPanel.add(tipoEventoCombo);
 
         JLabel lblVeterinario = new JLabel("Veterinario:");
         buscarPanel.add(lblVeterinario);
 
         veterinarioCombo = new JComboBox<ComboItem<VeterinarioDTO>>();
+        setFixedComboWidth(veterinarioCombo, 240);
         buscarPanel.add(veterinarioCombo);
 
         JLabel fechaDesdeLabel = new JLabel("Fecha Desde:");
         buscarPanel.add(fechaDesdeLabel);
 
         fechaDesdeDateChooser = new JDateChooser();
+        fechaDesdeDateChooser.setPreferredSize(new Dimension(100, fechaDesdeDateChooser.getPreferredSize().height));
         buscarPanel.add(fechaDesdeDateChooser);
 
         JLabel fechaHastaLabel = new JLabel("Hasta:");
         buscarPanel.add(fechaHastaLabel);
 
         fechaHastaDateChooser = new JDateChooser();
+        fechaHastaDateChooser.setPreferredSize(new Dimension(100, fechaHastaDateChooser.getPreferredSize().height));
         buscarPanel.add(fechaHastaDateChooser);
 
         buscarButton = new JButton("Buscar");
@@ -161,6 +166,13 @@ public class EventoSearchView extends AbstractView implements FarmFilterAware {
         veterinarioService = new VeterinarioServiceImpl();
         loadTipoEventoCombo();
         loadVeterinarioCombo();
+    }
+
+    private void setFixedComboWidth(JComboBox<?> combo, int width) {
+        Dimension preferred = combo.getPreferredSize();
+        combo.setPreferredSize(new Dimension(width, preferred.height));
+        combo.setMinimumSize(new Dimension(width, preferred.height));
+        combo.setMaximumSize(new Dimension(width, preferred.height));
     }
 
     private void postInitialize() {

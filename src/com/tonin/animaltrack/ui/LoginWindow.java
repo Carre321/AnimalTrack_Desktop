@@ -86,7 +86,7 @@ public class LoginWindow {
         gbc.gridwidth = 1;
         gbc.weightx = 0;
         gbc.insets = new Insets(8, 8, 8, 8);
-        cardPanel.add(new JLabel("Email:"), gbc);
+        cardPanel.add(new JLabel("Email *:"), gbc);
 
         emailTF = new JTextField(24);
         emailTF.setPreferredSize(new Dimension(280, 28));
@@ -97,7 +97,7 @@ public class LoginWindow {
         gbc.gridx = 0;
         gbc.gridy = 3;
         gbc.weightx = 0;
-        cardPanel.add(new JLabel("Contraseña:"), gbc);
+        cardPanel.add(new JLabel("Contraseña *:"), gbc);
 
         passwordPF = new JPasswordField(24);
         passwordPF.setPreferredSize(new Dimension(280, 28));

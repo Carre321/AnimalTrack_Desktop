@@ -42,10 +42,6 @@ public class UserPermissions {
         return isAdmin() || isGanadero() || isVeterinario();
     }
 
-    public boolean canOpenVeterinarios() {
-        return isAdmin();
-    }
-
     public boolean canOpenSemillas() {
         return isAdmin() || isVeterinario();
     }
@@ -80,10 +76,6 @@ public class UserPermissions {
 
     public boolean canOpenGanaderoViews() {
         return isAdmin() || isGanadero();
-    }
-
-    public boolean canOpenVeterinarioViews() {
-        return isAdmin() || isVeterinario();
     }
 
     public boolean canManageOwnFarm() {

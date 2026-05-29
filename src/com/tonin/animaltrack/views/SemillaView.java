@@ -114,8 +114,8 @@ public class SemillaView extends AbstractView {
         descripcionTF = new JTextField(36);
         razaEditCB = new JComboBox<ComboItem<Raza>>();
 
-        addField(editPanel, 0, "Codigo:", codigoTF);
-        addField(editPanel, 1, "Nombre:", nombreTF);
+        addField(editPanel, 0, "Codigo *:", codigoTF);
+        addField(editPanel, 1, "Nombre *:", nombreTF);
         addField(editPanel, 2, "Raza:", razaEditCB);
         addField(editPanel, 3, "Descripcion:", descripcionTF);
 

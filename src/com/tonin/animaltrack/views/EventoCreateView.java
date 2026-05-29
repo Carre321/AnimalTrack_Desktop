@@ -129,10 +129,10 @@ public class EventoCreateView extends AbstractView {
         resultadoTF = new JTextField(12);
         observacionesTF = new JTextField(24);
 
-        addField(formPanel, row++, "Animal:", animalCombo);
-        addField(formPanel, row++, "Tipo evento:", tipoEventoCombo);
+        addField(formPanel, row++, "Animal *:", animalCombo);
+        addField(formPanel, row++, "Tipo evento *:", tipoEventoCombo);
         addField(formPanel, row++, "Veterinario:", veterinarioCombo);
-        addField(formPanel, row++, "Fecha:", fechaChooser);
+        addField(formPanel, row++, "Fecha *:", fechaChooser);
         addField(formPanel, row++, "Hora (HH:mm):", horaTF);
         addField(formPanel, row++, "Precio:", precioTF);
         resultadoLabel = new JLabel("Resultado:");
